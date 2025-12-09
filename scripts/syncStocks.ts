@@ -37,15 +37,19 @@ const NSE_STOCKS = [
   { symbol: 'JSWSTEEL', name: 'JSW Steel Ltd', sector: 'Metals' },
   { symbol: 'HINDALCO', name: 'Hindalco Industries Ltd', sector: 'Metals' },
   { symbol: 'COALINDIA', name: 'Coal India Ltd', sector: 'Mining' },
-  { symbol: 'ADANIPORTS', name: 'Adani Ports and Special Economic Zone Ltd', sector: 'Infrastructure' },
+  {
+    symbol: 'ADANIPORTS',
+    name: 'Adani Ports and Special Economic Zone Ltd',
+    sector: 'Infrastructure',
+  },
   { symbol: 'TATAMOTORS', name: 'Tata Motors Ltd', sector: 'Automobile' },
   { symbol: 'M&M', name: 'Mahindra & Mahindra Ltd', sector: 'Automobile' },
   { symbol: 'BAJAJFINSV', name: 'Bajaj Finserv Ltd', sector: 'Finance' },
   { symbol: 'BAJAJ-AUTO', name: 'Bajaj Auto Ltd', sector: 'Automobile' },
   { symbol: 'HEROMOTOCO', name: 'Hero MotoCorp Ltd', sector: 'Automobile' },
   { symbol: 'EICHERMOT', name: 'Eicher Motors Ltd', sector: 'Automobile' },
-  { symbol: 'DIVISLAB', name: 'Divi\'s Laboratories Ltd', sector: 'Pharma' },
-  { symbol: 'DRREDDY', name: 'Dr. Reddy\'s Laboratories Ltd', sector: 'Pharma' },
+  { symbol: 'DIVISLAB', name: "Divi's Laboratories Ltd", sector: 'Pharma' },
+  { symbol: 'DRREDDY', name: "Dr. Reddy's Laboratories Ltd", sector: 'Pharma' },
   { symbol: 'CIPLA', name: 'Cipla Ltd', sector: 'Pharma' },
   { symbol: 'APOLLOHOSP', name: 'Apollo Hospitals Enterprise Ltd', sector: 'Healthcare' },
   { symbol: 'GRASIM', name: 'Grasim Industries Ltd', sector: 'Cement' },
@@ -59,7 +63,11 @@ const NSE_STOCKS = [
   { symbol: 'BANDHANBNK', name: 'Bandhan Bank Ltd', sector: 'Banking' },
   { symbol: 'SBILIFE', name: 'SBI Life Insurance Company Ltd', sector: 'Insurance' },
   { symbol: 'HDFCLIFE', name: 'HDFC Life Insurance Company Ltd', sector: 'Insurance' },
-  { symbol: 'ICICIPRULI', name: 'ICICI Prudential Life Insurance Company Ltd', sector: 'Insurance' },
+  {
+    symbol: 'ICICIPRULI',
+    name: 'ICICI Prudential Life Insurance Company Ltd',
+    sector: 'Insurance',
+  },
   { symbol: 'BAJAJHLDNG', name: 'Bajaj Holdings & Investment Ltd', sector: 'Finance' },
   { symbol: 'ADANIENT', name: 'Adani Enterprises Ltd', sector: 'Conglomerate' },
   { symbol: 'ADANIGREEN', name: 'Adani Green Energy Ltd', sector: 'Power' },
@@ -97,11 +105,19 @@ const NSE_STOCKS = [
   { symbol: 'COFORGE', name: 'Coforge Ltd', sector: 'IT' },
   { symbol: 'MINDTREE', name: 'Mindtree Ltd', sector: 'IT' },
   { symbol: 'MUTHOOTFIN', name: 'Muthoot Finance Ltd', sector: 'Finance' },
-  { symbol: 'CHOLAFIN', name: 'Cholamandalam Investment and Finance Company Ltd', sector: 'Finance' },
+  {
+    symbol: 'CHOLAFIN',
+    name: 'Cholamandalam Investment and Finance Company Ltd',
+    sector: 'Finance',
+  },
   { symbol: 'LICHSGFIN', name: 'LIC Housing Finance Ltd', sector: 'Finance' },
   { symbol: 'PFC', name: 'Power Finance Corporation Ltd', sector: 'Finance' },
   { symbol: 'RECLTD', name: 'REC Ltd', sector: 'Finance' },
-  { symbol: 'IRCTC', name: 'Indian Railway Catering and Tourism Corporation Ltd', sector: 'Tourism' },
+  {
+    symbol: 'IRCTC',
+    name: 'Indian Railway Catering and Tourism Corporation Ltd',
+    sector: 'Tourism',
+  },
   { symbol: 'CONCOR', name: 'Container Corporation of India Ltd', sector: 'Logistics' },
   { symbol: 'ABFRL', name: 'Aditya Birla Fashion and Retail Ltd', sector: 'Retail' },
   { symbol: 'PAGEIND', name: 'Page Industries Ltd', sector: 'Textile' },
@@ -117,7 +133,7 @@ async function syncStocks() {
 
     let upserted = 0
     for (const stock of NSE_STOCKS) {
-      await Stock.findOneAndUpdate(
+      await (Stock as any).findOneAndUpdate(
         { symbol: stock.symbol },
         {
           symbol: stock.symbol,

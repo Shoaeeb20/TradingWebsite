@@ -23,7 +23,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         await connectDB()
-        const user = await User.findOne({ email: credentials.email })
+        const user = await (User as any).findOne({ email: credentials.email })
 
         if (!user || !user.password) {
           throw new Error('User not found')
@@ -47,10 +47,10 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }) {
       if (account?.provider === 'google') {
         await connectDB()
-        const existingUser = await User.findOne({ email: user.email })
+        const existingUser = await (User as any).findOne({ email: user.email })
 
         if (!existingUser) {
-          await User.create({
+          await (User as any).create({
             email: user.email,
             name: user.name,
             balance: parseFloat(process.env.INITIAL_BALANCE || '100000'),

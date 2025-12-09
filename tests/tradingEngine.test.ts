@@ -14,14 +14,14 @@ describe('Trading Engine', () => {
   beforeAll(async () => {
     await connectDB()
 
-    const user = await User.create({
+    const user = await (User as any).create({
       email: 'test@test.com',
       name: 'Test User',
       balance: 100000,
     })
     testUserId = user._id.toString()
 
-    await Stock.create({
+    await (Stock as any).create({
       symbol: testSymbol,
       name: 'Test Stock Ltd',
       exchange: 'NSE',
@@ -30,10 +30,10 @@ describe('Trading Engine', () => {
   })
 
   afterAll(async () => {
-    await User.deleteMany({ email: 'test@test.com' })
-    await Stock.deleteMany({ symbol: testSymbol })
-    await Order.deleteMany({ userId: testUserId })
-    await Holding.deleteMany({ userId: testUserId })
+    await (User as any).deleteMany({ email: 'test@test.com' })
+    await (Stock as any).deleteMany({ symbol: testSymbol })
+    await (Order as any).deleteMany({ userId: testUserId })
+    await (Holding as any).deleteMany({ userId: testUserId })
     await mongoose.connection.close()
   })
 
@@ -42,6 +42,7 @@ describe('Trading Engine', () => {
       symbol: testSymbol,
       type: 'BUY',
       orderType: 'MARKET',
+      productType: 'DELIVERY',
       quantity: -5,
     })
 
@@ -54,6 +55,7 @@ describe('Trading Engine', () => {
       symbol: testSymbol,
       type: 'BUY',
       orderType: 'LIMIT',
+      productType: 'DELIVERY',
       quantity: 10,
     })
 
@@ -66,6 +68,7 @@ describe('Trading Engine', () => {
       symbol: 'NONEXISTENT',
       type: 'BUY',
       orderType: 'MARKET',
+      productType: 'DELIVERY',
       quantity: 10,
     })
 
@@ -78,6 +81,7 @@ describe('Trading Engine', () => {
       symbol: testSymbol,
       type: 'BUY',
       orderType: 'LIMIT',
+      productType: 'DELIVERY',
       quantity: 10,
       price: 100,
     })
@@ -91,6 +95,7 @@ describe('Trading Engine', () => {
       symbol: testSymbol,
       type: 'BUY',
       orderType: 'LIMIT',
+      productType: 'DELIVERY',
       quantity: 10,
       price: 100,
     })
@@ -105,6 +110,7 @@ describe('Trading Engine', () => {
       symbol: testSymbol,
       type: 'SELL',
       orderType: 'MARKET',
+      productType: 'DELIVERY',
       quantity: 10,
     })
 

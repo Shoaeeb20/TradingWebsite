@@ -39,12 +39,12 @@ async function validateOrder(
     return { valid: false, error: 'Limit orders require a valid price' }
   }
 
-  const stock = await Stock.findOne({ symbol })
+  const stock = await (Stock as any).findOne({ symbol })
   if (!stock) {
     return { valid: false, error: 'Stock not found' }
   }
 
-  const user = await User.findById(userId)
+  const user = await (User as any).findById(userId)
   if (!user) {
     return { valid: false, error: 'User not found' }
   }
@@ -69,7 +69,7 @@ async function validateOrder(
   if (type === 'SELL') {
     // Block delivery short selling
     if (productType === 'DELIVERY') {
-      const holding = await Holding.findOne({ userId, symbol, productType: 'DELIVERY' })
+      const holding = await (Holding as any).findOne({ userId, symbol, productType: 'DELIVERY' })
       if (!holding || holding.quantity < quantity) {
         return { valid: false, error: 'Insufficient delivery holdings. Short selling only allowed for intraday.' }
       }
@@ -97,7 +97,7 @@ export async function placeOrder(userId: string, payload: OrderPayload): Promise
   session.startTransaction()
 
   try {
-    const order = await Order.create(
+    const order = await (Order as any).create(
       [
         {
           userId,
@@ -128,7 +128,7 @@ export async function placeOrder(userId: string, payload: OrderPayload): Promise
           message: 'Order filled successfully',
         }
       } else {
-        await Order.findByIdAndUpdate(
+        await (Order as any).findByIdAndUpdate(
           orderId,
           { status: 'CANCELLED', cancelledAt: new Date() },
           { session }
@@ -157,7 +157,7 @@ async function fillMarketOrder(
   orderId: string,
   session: mongoose.ClientSession
 ): Promise<OrderResult> {
-  const order = await Order.findById(orderId).session(session)
+  const order = await (Order as any).findById(orderId).session(session)
   if (!order) {
     return { success: false, message: 'Order not found' }
   }
@@ -170,7 +170,7 @@ async function fillMarketOrder(
   const fillPrice = quote.price
   const totalCost = fillPrice * order.quantity
 
-  const user = await User.findById(order.userId).session(session)
+  const user = await (User as any).findById(order.userId).session(session)
   if (!user) {
     return { success: false, message: 'User not found' }
   }
@@ -183,14 +183,14 @@ async function fillMarketOrder(
     user.balance -= totalCost
     await user.save({ session })
 
-    const holding = await Holding.findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
+    const holding = await (Holding as any).findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
 
     if (holding) {
       if (holding.quantity < 0) {
         // Covering short position
         holding.quantity += order.quantity
         if (holding.quantity === 0) {
-          await Holding.deleteOne({ _id: holding._id }).session(session)
+          await (Holding as any).deleteOne({ _id: holding._id }).session(session)
         } else {
           await holding.save({ session })
         }
@@ -203,11 +203,11 @@ async function fillMarketOrder(
         await holding.save({ session })
       }
     } else {
-      await Holding.create([{ userId: order.userId, symbol: order.symbol, quantity: order.quantity, avgPrice: fillPrice, productType: order.productType }], { session })
+      await (Holding as any).create([{ userId: order.userId, symbol: order.symbol, quantity: order.quantity, avgPrice: fillPrice, productType: order.productType }], { session })
     }
   } else {
     // SELL order
-    const holding = await Holding.findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
+    const holding = await (Holding as any).findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
 
     if (holding) {
       // Has existing position - reduce it
@@ -216,17 +216,15 @@ async function fillMarketOrder(
 
       holding.quantity -= order.quantity
       if (holding.quantity === 0) {
-        await Holding.deleteOne({ _id: holding._id }).session(session)
+        await (Holding as any).deleteOne({ _id: holding._id }).session(session)
       } else {
         await holding.save({ session })
       }
     } else {
       // No position - create short position (intraday only)
       if (order.productType === 'INTRADAY') {
-        user.balance += totalCost
-        await user.save({ session })
-
-        await Holding.create([{ 
+        // Short sell: Don't add to balance yet, just create negative holding
+        await (Holding as any).create([{ 
           userId: order.userId, 
           symbol: order.symbol, 
           quantity: -order.quantity, 
@@ -239,7 +237,7 @@ async function fillMarketOrder(
     }
   }
 
-  await Trade.create([{ orderId: order._id, userId: order.userId, symbol: order.symbol, type: order.type, quantity: order.quantity, price: fillPrice, total: totalCost }], { session })
+  await (Trade as any).create([{ orderId: order._id, userId: order.userId, symbol: order.symbol, type: order.type, quantity: order.quantity, price: fillPrice, total: totalCost }], { session })
 
   order.status = 'FILLED'
   order.filledQuantity = order.quantity
@@ -259,8 +257,8 @@ export async function matchLimitOrders(symbol: string): Promise<number> {
   const currentPrice = quote.price
   let matchedCount = 0
 
-  const buyOrders = await Order.find({ symbol, type: 'BUY', orderType: 'LIMIT', status: 'PENDING', price: { $gte: currentPrice } }).sort({ price: -1, createdAt: 1 })
-  const sellOrders = await Order.find({ symbol, type: 'SELL', orderType: 'LIMIT', status: 'PENDING', price: { $lte: currentPrice } }).sort({ price: 1, createdAt: 1 })
+  const buyOrders = await (Order as any).find({ symbol, type: 'BUY', orderType: 'LIMIT', status: 'PENDING', price: { $gte: currentPrice } }).sort({ price: -1, createdAt: 1 })
+  const sellOrders = await (Order as any).find({ symbol, type: 'SELL', orderType: 'LIMIT', status: 'PENDING', price: { $lte: currentPrice } }).sort({ price: 1, createdAt: 1 })
 
   for (const order of buyOrders) {
     const session = await mongoose.startSession()
@@ -310,14 +308,14 @@ async function fillLimitOrder(
   fillPrice: number,
   session: mongoose.ClientSession
 ): Promise<OrderResult> {
-  const order = await Order.findById(orderId).session(session)
+  const order = await (Order as any).findById(orderId).session(session)
   if (!order || order.status !== 'PENDING') {
     return { success: false, message: 'Order not eligible for fill' }
   }
 
   const totalCost = fillPrice * order.quantity
 
-  const user = await User.findById(order.userId).session(session)
+  const user = await (User as any).findById(order.userId).session(session)
   if (!user) {
     return { success: false, message: 'User not found' }
   }
@@ -333,14 +331,14 @@ async function fillLimitOrder(
     user.balance -= totalCost
     await user.save({ session })
 
-    const holding = await Holding.findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
+    const holding = await (Holding as any).findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
 
     if (holding) {
       if (holding.quantity < 0) {
         // Covering short position
         holding.quantity += order.quantity
         if (holding.quantity === 0) {
-          await Holding.deleteOne({ _id: holding._id }).session(session)
+          await (Holding as any).deleteOne({ _id: holding._id }).session(session)
         } else {
           await holding.save({ session })
         }
@@ -353,11 +351,11 @@ async function fillLimitOrder(
         await holding.save({ session })
       }
     } else {
-      await Holding.create([{ userId: order.userId, symbol: order.symbol, quantity: order.quantity, avgPrice: fillPrice, productType: order.productType }], { session })
+      await (Holding as any).create([{ userId: order.userId, symbol: order.symbol, quantity: order.quantity, avgPrice: fillPrice, productType: order.productType }], { session })
     }
   } else {
     // SELL order (limit)
-    const holding = await Holding.findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
+    const holding = await (Holding as any).findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
 
     if (holding) {
       // Has existing position
@@ -366,17 +364,15 @@ async function fillLimitOrder(
 
       holding.quantity -= order.quantity
       if (holding.quantity === 0) {
-        await Holding.deleteOne({ _id: holding._id }).session(session)
+        await (Holding as any).deleteOne({ _id: holding._id }).session(session)
       } else {
         await holding.save({ session })
       }
     } else {
       // No position - short sell (intraday only)
       if (order.productType === 'INTRADAY') {
-        user.balance += totalCost
-        await user.save({ session })
-
-        await Holding.create([{ 
+        // Short sell: Don't add to balance yet, just create negative holding
+        await (Holding as any).create([{ 
           userId: order.userId, 
           symbol: order.symbol, 
           quantity: -order.quantity, 
@@ -392,7 +388,7 @@ async function fillLimitOrder(
     }
   }
 
-  await Trade.create([{ orderId: order._id, userId: order.userId, symbol: order.symbol, type: order.type, quantity: order.quantity, price: fillPrice, total: totalCost }], { session })
+  await (Trade as any).create([{ orderId: order._id, userId: order.userId, symbol: order.symbol, type: order.type, quantity: order.quantity, price: fillPrice, total: totalCost }], { session })
 
   order.status = 'FILLED'
   order.filledQuantity = order.quantity
@@ -406,7 +402,7 @@ async function fillLimitOrder(
 export async function cancelOrder(userId: string, orderId: string): Promise<OrderResult> {
   await connectDB()
 
-  const order = await Order.findOne({ _id: orderId, userId })
+  const order = await (Order as any).findOne({ _id: orderId, userId })
   if (!order) {
     return { success: false, message: 'Order not found' }
   }

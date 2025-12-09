@@ -18,13 +18,15 @@ export default async function Dashboard() {
 
   await connectDB()
 
-  const user = await User.findOne({ email: session.user.email }).lean()
-  const holdings = await Holding.find({ userId: user?._id }).lean()
-  const recentTrades = await Trade.find({ userId: user?._id })
+  const user = await (User as any).findOne({ email: session.user.email }).lean()
+  if (!user) redirect('/auth/signin')
+
+  const holdings = await (Holding as any).find({ userId: user._id }).lean()
+  const recentTrades = await (Trade as any).find({ userId: user._id })
     .sort({ createdAt: -1 })
     .limit(10)
     .lean()
-  const activeOrders = await Order.find({ userId: user?._id, status: 'PENDING' })
+  const activeOrders = await (Order as any).find({ userId: user._id, status: 'PENDING' })
     .sort({ createdAt: -1 })
     .lean()
 
@@ -33,7 +35,7 @@ export default async function Dashboard() {
       <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 
       <PortfolioSummary
-        balance={user?.balance || 0}
+        balance={user.balance || 0}
         holdings={holdings.map((h) => ({
           symbol: h.symbol,
           quantity: h.quantity,
@@ -43,7 +45,7 @@ export default async function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <ActiveOrders
-          orders={activeOrders.map((o) => ({
+          orders={activeOrders.map((o: any) => ({
             id: o._id.toString(),
             symbol: o.symbol,
             type: o.type,

@@ -16,7 +16,7 @@ export async function GET(req: Request) {
 
     await connectDB()
 
-    const cached = await Price.findOne({
+    const cached = await (Price as any).findOne({
       symbol: symbol.toUpperCase(),
       timestamp: { $gte: new Date(Date.now() - CACHE_DURATION) },
     }).lean()
@@ -38,7 +38,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Failed to fetch price' }, { status: 500 })
     }
 
-    await Price.findOneAndUpdate(
+    await (Price as any).findOneAndUpdate(
       { symbol: quote.symbol },
       {
         price: quote.price,

@@ -13,9 +13,11 @@ export default async function Portfolio() {
   if (!session?.user) redirect('/auth/signin')
 
   await connectDB()
-  const user = await User.findOne({ email: session.user.email }).lean()
-  const holdings = await Holding.find({ userId: user?._id }).lean()
-  const userId = user?._id.toString()
+  const user = await (User as any).findOne({ email: session.user.email }).lean()
+  if (!user) redirect('/auth/signin')
+
+  const holdings = await (Holding as any).find({ userId: user._id }).lean()
+  const userId = user._id.toString()
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -24,7 +26,7 @@ export default async function Portfolio() {
       <div className="card mb-6">
         <div className="text-sm text-gray-600">Available Balance</div>
         <div className="text-3xl font-bold text-primary">
-          ₹{user?.balance.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+          ₹{user.balance.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
         </div>
       </div>
 

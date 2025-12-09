@@ -20,9 +20,11 @@ export default function PortfolioTable({ holdings, userId }: { holdings: Holding
   const [selling, setSelling] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const [enrichedHoldings, setEnrichedHoldings] = useState<HoldingWithPrice[]>(holdings)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchPrices = async () => {
+      setLoading(true)
       const updated = await Promise.all(
         holdings.map(async (holding) => {
           try {
@@ -40,10 +42,17 @@ export default function PortfolioTable({ holdings, userId }: { holdings: Holding
         })
       )
       setEnrichedHoldings(updated)
+      setLoading(false)
     }
 
     if (holdings.length > 0) {
       fetchPrices()
+      
+      // Auto-refresh prices every 2 minutes
+      const interval = setInterval(fetchPrices, 2 * 60 * 1000)
+      return () => clearInterval(interval)
+    } else {
+      setLoading(false)
     }
   }, [holdings])
 
@@ -135,12 +144,22 @@ export default function PortfolioTable({ holdings, userId }: { holdings: Holding
                 </td>
                 <td className="text-right">₹{holding.avgPrice.toFixed(2)}</td>
                 <td className="text-right">
-                  {holding.currentPrice ? `₹${holding.currentPrice.toFixed(2)}` : '—'}
+                  {loading ? (
+                    <div className="h-5 w-16 bg-gray-200 animate-pulse rounded inline-block"></div>
+                  ) : holding.currentPrice ? (
+                    `₹${holding.currentPrice.toFixed(2)}`
+                  ) : (
+                    '—'
+                  )}
                 </td>
                 <td className={`text-right font-semibold ${holding.pnl && holding.pnl >= 0 ? 'text-success' : 'text-danger'}`}>
-                  {holding.pnl
-                    ? `${holding.pnl >= 0 ? '+' : ''}₹${holding.pnl.toFixed(2)}`
-                    : '—'}
+                  {loading ? (
+                    <div className="h-5 w-20 bg-gray-200 animate-pulse rounded inline-block"></div>
+                  ) : holding.pnl ? (
+                    `${holding.pnl >= 0 ? '+' : ''}₹${holding.pnl.toFixed(2)}`
+                  ) : (
+                    '—'
+                  )}
                 </td>
                 <td className="text-right">
                   <button

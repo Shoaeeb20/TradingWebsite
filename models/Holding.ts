@@ -14,7 +14,7 @@ const HoldingSchema = new Schema<IHolding>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     symbol: { type: String, required: true, uppercase: true },
-    quantity: { type: Number, required: true, min: 0 },
+    quantity: { type: Number, required: true },
     avgPrice: { type: Number, required: true },
     productType: { type: String, enum: ['INTRADAY', 'DELIVERY'], default: 'DELIVERY' },
   },

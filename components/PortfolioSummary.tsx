@@ -16,9 +16,11 @@ interface PortfolioSummaryProps {
 export default function PortfolioSummary({ balance, holdings }: PortfolioSummaryProps) {
   const [totalValue, setTotalValue] = useState(balance)
   const [pnl, setPnl] = useState(0)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchPrices = async () => {
+      setLoading(true)
       let invested = 0
       let current = 0
 
@@ -41,10 +43,17 @@ export default function PortfolioSummary({ balance, holdings }: PortfolioSummary
 
       setTotalValue(balance + holdingsValue)
       setPnl(totalPnl)
+      setLoading(false)
     }
 
     if (holdings.length > 0) {
       fetchPrices()
+      
+      // Auto-refresh prices every 2 minutes
+      const interval = setInterval(fetchPrices, 2 * 60 * 1000)
+      return () => clearInterval(interval)
+    } else {
+      setLoading(false)
     }
   }, [holdings, balance])
 
@@ -52,9 +61,13 @@ export default function PortfolioSummary({ balance, holdings }: PortfolioSummary
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div className="card">
         <div className="text-sm text-gray-600">Total Portfolio Value</div>
-        <div className="text-3xl font-bold text-primary">
-          ₹{totalValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-        </div>
+        {loading ? (
+          <div className="h-9 w-32 bg-gray-200 animate-pulse rounded mt-1"></div>
+        ) : (
+          <div className="text-3xl font-bold text-primary">
+            ₹{totalValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+          </div>
+        )}
       </div>
 
       <div className="card">
@@ -66,9 +79,13 @@ export default function PortfolioSummary({ balance, holdings }: PortfolioSummary
 
       <div className="card">
         <div className="text-sm text-gray-600">Total P&L</div>
-        <div className={`text-3xl font-bold ${pnl >= 0 ? 'text-success' : 'text-danger'}`}>
-          {pnl >= 0 ? '+' : ''}₹{pnl.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-        </div>
+        {loading ? (
+          <div className="h-9 w-32 bg-gray-200 animate-pulse rounded mt-1"></div>
+        ) : (
+          <div className={`text-3xl font-bold ${pnl >= 0 ? 'text-success' : 'text-danger'}`}>
+            {pnl >= 0 ? '+' : ''}₹{pnl.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -13,11 +13,16 @@ export async function GET() {
     }
 
     await connectDB()
-    const user = await User.findOne({ email: session.user.email }).lean()
-    const holdings = await Holding.find({ userId: user?._id }).lean()
+    // Type assertion needed for Mongoose lean() return type
+    const user = await (User as any).findOne({ email: session.user.email }).lean()
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const holdings = await (Holding as any).find({ userId: user._id }).lean()
 
     return NextResponse.json({
-      balance: user?.balance || 0,
+      balance: user.balance || 0,
       holdings: holdings.map((h) => ({
         symbol: h.symbol,
         quantity: h.quantity,

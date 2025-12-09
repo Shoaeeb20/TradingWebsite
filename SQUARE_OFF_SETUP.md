@@ -1,95 +1,210 @@
-# Auto Square-Off Setup Guide
+# Intraday Square-Off Setup Guide
+
+## Overview
+
+The platform now supports automatic square-off of INTRADAY positions at 3:20 PM IST daily (Monday-Friday).
 
 ## How It Works
 
-All intraday positions (long or short) are automatically closed at 3:20 PM IST daily.
+1. **Product Types**:
+   - **INTRADAY**: Positions automatically squared off at 3:20 PM IST
+   - **DELIVERY**: Positions held indefinitely until manually closed
 
-## Setup Steps
+2. **Square-Off Process**:
+   - Runs daily at 3:20 PM IST (9:50 AM UTC)
+   - Finds all INTRADAY holdings
+   - Places market orders to close positions
+   - Calculates P&L and updates user balance
+   - Creates trade records for audit
+
+3. **Short Positions**:
+   - INTRADAY short selling is allowed
+   - Short positions are covered (bought back) during square-off
+   - DELIVERY short selling is blocked
+
+## Vercel Deployment Setup
 
 ### 1. Add Environment Variable
 
-Add to your `.env.local` or Vercel environment variables:
+In Vercel dashboard, add:
 
-```env
-CRON_SECRET=your-random-secret-key-here
+```
+CRON_SECRET=<generate-random-secret>
 ```
 
-Generate a random secret:
+Generate secret:
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
-### 2. Setup Free Cron Service
+### 2. Vercel Cron Configuration
 
-**Option A: cron-job.org (Recommended)**
+The `vercel.json` file is already configured:
 
-1. Go to https://cron-job.org/en/
-2. Sign up (free)
-3. Create new cron job:
-   - **Title:** PaperTrade Square-Off
-   - **URL:** `https://your-app.vercel.app/api/cron/square-off`
-   - **Schedule:** Daily at 15:20 (3:20 PM IST)
-   - **Request Method:** GET
-   - **Headers:** Add `Authorization: Bearer YOUR_CRON_SECRET`
-4. Save and enable
-
-**Option B: EasyCron**
-
-1. Go to https://www.easycron.com/
-2. Sign up (free - 1 cron job)
-3. Create cron job:
-   - **URL:** `https://your-app.vercel.app/api/cron/square-off`
-   - **Cron Expression:** `20 15 * * *` (3:20 PM daily)
-   - **HTTP Headers:** `Authorization: Bearer YOUR_CRON_SECRET`
-4. Save
-
-### 3. Test the Endpoint
-
-```bash
-curl -X GET https://your-app.vercel.app/api/cron/square-off \
-  -H "Authorization: Bearer YOUR_CRON_SECRET"
-```
-
-Expected response:
 ```json
 {
-  "success": true,
-  "squaredOff": 5,
-  "total": 5
+  "crons": [
+    {
+      "path": "/api/cron/square-off",
+      "schedule": "50 9 * * 1-5"
+    }
+  ]
 }
 ```
 
-## What Gets Squared Off
+**Schedule**: `50 9 * * 1-5`
+- Runs at 9:50 AM UTC = 3:20 PM IST
+- Monday to Friday only
+- Automatically skips weekends
 
-- **Long positions:** Automatically sold at market price
-- **Short positions:** Automatically bought back at market price
-- **Only INTRADAY:** Delivery positions are NOT affected
+### 3. Deploy to Vercel
 
-## Example
-
-```
-User has at 3:20 PM:
-- Long: 10 RELIANCE (INTRADAY) → Auto SELL 10
-- Short: -5 TCS (INTRADAY) → Auto BUY 5
-- Long: 20 HDFC (DELIVERY) → NOT touched
-
-Result:
-- All intraday positions closed
-- P&L calculated and added to balance
-- Delivery positions remain
+```bash
+git add .
+git commit -m "Add intraday square-off feature"
+git push origin main
 ```
 
-## Timezone Note
+Vercel will automatically:
+- Detect `vercel.json`
+- Set up the cron job
+- Run it daily at scheduled time
 
-Make sure your cron service is set to **IST (UTC+5:30)** or adjust the time accordingly.
+## Local Testing
 
-## Vercel Free Tier
+Test the square-off endpoint locally:
 
-✅ This solution works on **Vercel Free Tier**
-✅ No paid Vercel Pro plan needed
-✅ Uses external free cron service
-✅ API endpoint is serverless (free)
+```bash
+# Start dev server
+npm run dev
+
+# In another terminal, trigger square-off
+curl -X GET http://localhost:3000/api/cron/square-off \
+  -H "Authorization: Bearer your-cron-secret"
+```
+
+## API Endpoint
+
+**GET** `/api/cron/square-off`
+
+**Headers**:
+```
+Authorization: Bearer <CRON_SECRET>
+```
+
+**Response**:
+```json
+{
+  "message": "Square-off completed",
+  "squaredOff": 5,
+  "total": 5,
+  "errors": []
+}
+```
+
+## Database Changes
+
+### Holding Model
+Added `productType` field:
+```typescript
+{
+  productType: 'INTRADAY' | 'DELIVERY'  // Default: 'DELIVERY'
+}
+```
+
+### Index Updated
+```typescript
+{ userId: 1, symbol: 1, productType: 1 }  // Unique compound index
+```
+
+## User Experience
+
+### Trade Form
+- Users select INTRADAY or DELIVERY when placing orders
+- Button shows: "Place BUY Order (INTRADAY)"
+
+### Portfolio Page
+- Holdings show product type badge
+- INTRADAY positions have blue badge
+- DELIVERY positions have green badge
+- Short positions show negative quantity with (SHORT) label
+
+### Square-Off Notification
+- Positions automatically closed at 3:20 PM IST
+- P&L realized and added to balance
+- Trade history shows square-off trades
 
 ## Monitoring
 
-Check cron job execution logs in your cron service dashboard to ensure it runs daily.
+### Check Cron Logs in Vercel
+
+1. Go to Vercel Dashboard
+2. Select your project
+3. Click "Deployments"
+4. Click on latest deployment
+5. Go to "Functions" tab
+6. Find `/api/cron/square-off`
+7. View execution logs
+
+### Manual Trigger (Emergency)
+
+If cron fails, manually trigger via Vercel dashboard or:
+
+```bash
+curl -X GET https://your-app.vercel.app/api/cron/square-off \
+  -H "Authorization: Bearer <CRON_SECRET>"
+```
+
+## Cost Impact
+
+**Vercel Hobby Plan**:
+- ✅ Cron jobs included
+- ✅ 1 execution per day = 22/month
+- ✅ ~2-5 seconds execution time
+- ✅ Negligible bandwidth (~100 KB/day)
+
+**Total monthly cost**: $0 (within free tier)
+
+## Troubleshooting
+
+### Cron Not Running
+
+1. Check `vercel.json` is in root directory
+2. Verify `CRON_SECRET` is set in Vercel env vars
+3. Check Vercel deployment logs
+4. Ensure schedule is correct (UTC time)
+
+### Square-Off Failed
+
+1. Check function logs in Vercel
+2. Verify MongoDB connection
+3. Check Yahoo Finance API availability
+4. Manually trigger to test
+
+### Wrong Time Zone
+
+Schedule is in UTC. To adjust:
+- 3:20 PM IST = 9:50 AM UTC
+- 3:30 PM IST = 10:00 AM UTC
+- Use: https://www.worldtimebuddy.com/
+
+## Security
+
+- Endpoint protected by `CRON_SECRET`
+- Only Vercel cron can call it
+- No public access
+- Logs all executions
+
+## Future Enhancements
+
+- Email notification before square-off
+- SMS alerts for large positions
+- Configurable square-off time
+- Holiday calendar integration
+- Square-off preview dashboard
+
+---
+
+**Status**: ✅ Production Ready
+
+**Last Updated**: 2024

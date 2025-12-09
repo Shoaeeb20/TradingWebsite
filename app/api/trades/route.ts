@@ -13,12 +13,12 @@ export async function GET(req: Request) {
     }
 
     await connectDB()
-    const user = await User.findOne({ email: session.user.email })
+    const user = await (User as any).findOne({ email: session.user.email })
 
     const { searchParams } = new URL(req.url)
     const limit = parseInt(searchParams.get('limit') || '50')
 
-    const trades = await Trade.find({ userId: user?._id })
+    const trades = await (Trade as any).find({ userId: user?._id })
       .sort({ createdAt: -1 })
       .limit(limit)
       .lean()

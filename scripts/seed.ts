@@ -28,7 +28,7 @@ async function seed() {
     console.log('Creating demo user...')
     const hashedPassword = await bcrypt.hash('demo123', 10)
 
-    const existingUser = await User.findOne({ email: 'demo@example.com' })
+    const existingUser = await (User as any).findOne({ email: 'demo@example.com' })
     let user
 
     if (existingUser) {
@@ -37,7 +37,7 @@ async function seed() {
       await existingUser.save()
       user = existingUser
     } else {
-      user = await User.create({
+      user = await (User as any).create({
         email: 'demo@example.com',
         name: 'Demo User',
         password: hashedPassword,
@@ -47,14 +47,14 @@ async function seed() {
     }
 
     console.log('Checking stocks...')
-    const stockCount = await Stock.countDocuments()
+    const stockCount = await (Stock as any).countDocuments()
     if (stockCount === 0) {
       console.log('No stocks found. Run npm run sync-stocks first.')
       process.exit(1)
     }
 
     console.log('Creating sample trades...')
-    const stocks = await Stock.find().limit(5).lean()
+    const stocks = await (Stock as any).find().limit(5).lean()
 
     const session = await mongoose.startSession()
     session.startTransaction()
@@ -65,7 +65,7 @@ async function seed() {
         const quantity = (i + 1) * 10
         const price = 100 + i * 50
 
-        const order = await Order.create(
+        const order = await (Order as any).create(
           [
             {
               userId: user._id,
@@ -82,7 +82,7 @@ async function seed() {
           { session }
         )
 
-        await Trade.create(
+        await (Trade as any).create(
           [
             {
               orderId: order[0]._id,
@@ -97,7 +97,7 @@ async function seed() {
           { session }
         )
 
-        await Holding.create(
+        await (Holding as any).create(
           [
             {
               userId: user._id,

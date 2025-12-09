@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function StockPage({ params }: { params: { symbol: string } }) {
   await connectDB()
-  const stock = await Stock.findOne({ symbol: params.symbol.toUpperCase() }).lean()
+  const stock = await (Stock as any).findOne({ symbol: params.symbol.toUpperCase() }).lean()
 
   if (!stock) notFound()
 
@@ -20,9 +20,9 @@ export default async function StockPage({ params }: { params: { symbol: string }
   
   let holdings: any[] = []
   if (session?.user) {
-    const user = await User.findOne({ email: session.user.email }).lean()
+    const user = await (User as any).findOne({ email: session.user.email }).lean()
     if (user) {
-      holdings = await Holding.find({ userId: user._id, symbol: stock.symbol }).lean()
+      holdings = await (Holding as any).find({ userId: user._id, symbol: stock.symbol }).lean()
     }
   }
 

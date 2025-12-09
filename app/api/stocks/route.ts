@@ -20,7 +20,7 @@ export async function GET(req: Request) {
         }
       : { active: true }
 
-    const stocks = await Stock.find(query).sort({ symbol: 1 }).limit(limit).lean()
+    const stocks = await (Stock as any).find(query).sort({ symbol: 1 }).limit(limit).lean()
 
     return NextResponse.json(stocks)
   } catch (error) {

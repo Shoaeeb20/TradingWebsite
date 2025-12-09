@@ -22,7 +22,7 @@ export default async function Home() {
             Master the <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Indian Stock Market</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Start with ₹1,00,000 virtual cash. Trade 100+ NSE stocks with real market data. Learn, practice, and compete—all for free.
+            Start with ₹1,00,000 virtual cash. Trade <span className="font-bold text-blue-600">100 carefully selected NSE stocks</span> with real market data. Learn, practice, and compete—all for free.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link href="/auth/signin" className="btn btn-primary text-lg px-8 py-4">
@@ -41,8 +41,8 @@ export default async function Home() {
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-3xl mb-4 mx-auto shadow-lg">
               📊
             </div>
-            <h3 className="text-xl font-bold mb-3">Real Market Data</h3>
-            <p className="text-gray-600">Live NSE stock prices with 15-min delay. Practice with actual market conditions.</p>
+            <h3 className="text-xl font-bold mb-3">100 Real NSE Stocks</h3>
+            <p className="text-gray-600">Carefully selected top companies from Banking, IT, FMCG, Pharma, and more sectors.</p>
           </div>
           <div className="card text-center hover:scale-105 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
             <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center text-3xl mb-4 mx-auto shadow-lg">
@@ -98,8 +98,8 @@ export default async function Home() {
             <div className="flex gap-4">
               <div className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center font-bold">✓</div>
               <div>
-                <h4 className="font-bold mb-1">100+ NSE Stocks</h4>
-                <p className="text-gray-600 text-sm">Trade RELIANCE, TCS, HDFC, INFY, and 96 more popular stocks</p>
+                <h4 className="font-bold mb-1">100 Top NSE Stocks</h4>
+                <p className="text-gray-600 text-sm">Handpicked stocks including RELIANCE, TCS, HDFC, INFY, and 96 more blue-chip companies</p>
               </div>
             </div>
             <div className="flex gap-4">

@@ -90,7 +90,14 @@ export default function StockChart({ symbol }: { symbol: string }) {
   }, [symbol, timeframe, quote])
 
   if (loading) {
-    return <div className="card h-96 flex items-center justify-center">Loading...</div>
+    return (
+      <div className="card h-96 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-600">Loading chart...</p>
+        </div>
+      </div>
+    )
   }
 
   if (!quote || !quote.price) {

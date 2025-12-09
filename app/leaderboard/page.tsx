@@ -8,8 +8,8 @@ export const dynamic = 'force-dynamic'
 export default async function Leaderboard() {
   await connectDB()
 
-  const users = await User.find().select('name email balance').lean()
-  const allHoldings = await Holding.find().lean()
+  const users = await (User as any).find().select('name email balance').lean()
+  const allHoldings = await (Holding as any).find().lean()
 
   const leaderboard = users.map((user) => {
     const userHoldings = allHoldings.filter((h) => h.userId.toString() === user._id.toString())

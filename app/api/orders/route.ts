@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     }
 
     await connectDB()
-    const user = await User.findOne({ email: session.user.email })
+    const user = await (User as any).findOne({ email: session.user.email })
 
     const { searchParams } = new URL(req.url)
     const status = searchParams.get('status')
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     const query: any = { userId: user?._id }
     if (status) query.status = status
 
-    const orders = await Order.find(query).sort({ createdAt: -1 }).limit(limit).lean()
+    const orders = await (Order as any).find(query).sort({ createdAt: -1 }).limit(limit).lean()
 
     return NextResponse.json(orders)
   } catch (error) {

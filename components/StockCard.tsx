@@ -11,8 +11,10 @@ export default function StockCard({ symbol, name }: StockCardProps) {
   const [price, setPrice] = useState<number | null>(null)
   const [change, setChange] = useState<number | null>(null)
   const [changePercent, setChangePercent] = useState<number | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    setLoading(true)
     fetch(`/api/stocks/price?symbol=${symbol}`)
       .then((res) => res.json())
       .then((data) => {
@@ -23,6 +25,7 @@ export default function StockCard({ symbol, name }: StockCardProps) {
         }
       })
       .catch(console.error)
+      .finally(() => setLoading(false))
   }, [symbol])
 
   return (
@@ -32,7 +35,9 @@ export default function StockCard({ symbol, name }: StockCardProps) {
           <h3 className="font-bold text-lg">{symbol}</h3>
           <p className="text-sm text-gray-600 truncate">{name}</p>
         </div>
-        {price && (
+        {loading ? (
+          <div className="w-16 h-8 bg-gray-200 animate-pulse rounded"></div>
+        ) : price ? (
           <div className="text-right">
             <div className="font-bold">₹{price.toFixed(2)}</div>
             {change !== null && (
@@ -42,7 +47,7 @@ export default function StockCard({ symbol, name }: StockCardProps) {
               </div>
             )}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   )

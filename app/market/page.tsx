@@ -19,7 +19,7 @@ export default async function Market({ searchParams }: { searchParams: { q?: str
     ]
   }
   
-  const stocks = await Stock.find(filter).sort({ symbol: 1 }).limit(50).lean()
+  const stocks = await (Stock as any).find(filter).sort({ symbol: 1 }).limit(50).lean()
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
