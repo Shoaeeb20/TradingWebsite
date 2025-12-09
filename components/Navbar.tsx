@@ -14,6 +14,9 @@ export default function Navbar() {
             <Link href="/" className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hover:scale-105 transition-transform">
               PaperTrade 🇮🇳
             </Link>
+            <Link href="/simulator" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+              Simulator
+            </Link>
             {session && (
               <>
                 <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">

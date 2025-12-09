@@ -227,6 +227,13 @@
 - ✅ **Product Types** - Understand intraday vs delivery
 - ✅ **Short Selling** - Practice advanced strategies
 
+### Educational Games
+- ✅ **News Impact Simulator** - See how events affect stock prices
+- ✅ **60-Second Challenge** - Fast-paced prediction game with scoring
+- ✅ **Live Trading Simulator** - Real-time price movements with mock trading
+- ✅ **Market Psychology** - Learn trader behavior patterns
+- ✅ **Gamified Learning** - Fun way to understand markets
+
 ---
 
 ## 🚀 Deployment Features

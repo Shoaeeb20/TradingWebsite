@@ -50,19 +50,26 @@ async function validateOrder(
   }
 
   if (type === 'BUY') {
-    let estimatedCost: number
-    if (orderType === 'MARKET') {
-      const quote = await fetchQuote(symbol)
-      if (!quote) {
-        return { valid: false, error: 'Unable to fetch current price' }
+    // Check if covering a short position
+    const holding = await (Holding as any).findOne({ userId, symbol, productType })
+    const isCoveringShort = holding && holding.quantity < 0
+    
+    if (!isCoveringShort) {
+      // Only check balance if NOT covering a short position
+      let estimatedCost: number
+      if (orderType === 'MARKET') {
+        const quote = await fetchQuote(symbol)
+        if (!quote) {
+          return { valid: false, error: 'Unable to fetch current price' }
+        }
+        estimatedCost = quote.price * quantity
+      } else {
+        estimatedCost = price! * quantity
       }
-      estimatedCost = quote.price * quantity
-    } else {
-      estimatedCost = price! * quantity
-    }
 
-    if (user.balance < estimatedCost) {
-      return { valid: false, error: 'Insufficient balance' }
+      if (user.balance < estimatedCost) {
+        return { valid: false, error: 'Insufficient balance' }
+      }
     }
   }
 
@@ -176,18 +183,28 @@ async function fillMarketOrder(
   }
 
   if (order.type === 'BUY') {
-    if (user.balance < totalCost) {
-      return { success: false, message: 'Insufficient balance' }
-    }
-
-    user.balance -= totalCost
-    await user.save({ session })
-
     const holding = await (Holding as any).findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
+    const isCoveringShort = holding && holding.quantity < 0
+
+    if (!isCoveringShort) {
+      // Regular BUY: Deduct full amount from balance
+      if (user.balance < totalCost) {
+        return { success: false, message: 'Insufficient balance' }
+      }
+      user.balance -= totalCost
+      await user.save({ session })
+    }
 
     if (holding) {
       if (holding.quantity < 0) {
         // Covering short position
+        // Calculate P&L: (short_price - cover_price) × quantity
+        // Example: Short at ₹100, cover at ₹90 → Profit = (100-90)×qty = +₹10×qty
+        // Example: Short at ₹100, cover at ₹110 → Loss = (100-110)×qty = -₹10×qty
+        const pnl = (holding.avgPrice - fillPrice) * order.quantity
+        user.balance += pnl // Add profit or subtract loss
+        await user.save({ session })
+        
         holding.quantity += order.quantity
         if (holding.quantity === 0) {
           await (Holding as any).deleteOne({ _id: holding._id }).session(session)
@@ -203,6 +220,7 @@ async function fillMarketOrder(
         await holding.save({ session })
       }
     } else {
+      // New long position
       await (Holding as any).create([{ userId: order.userId, symbol: order.symbol, quantity: order.quantity, avgPrice: fillPrice, productType: order.productType }], { session })
     }
   } else {
@@ -210,7 +228,7 @@ async function fillMarketOrder(
     const holding = await (Holding as any).findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
 
     if (holding) {
-      // Has existing position - reduce it
+      // Selling existing long position: Add proceeds to balance
       user.balance += totalCost
       await user.save({ session })
 
@@ -221,9 +239,10 @@ async function fillMarketOrder(
         await holding.save({ session })
       }
     } else {
-      // No position - create short position (intraday only)
+      // No position - creating short position (intraday only)
       if (order.productType === 'INTRADAY') {
-        // Short sell: Don't add to balance yet, just create negative holding
+        // Short sell: Don't change balance, just create negative holding
+        // Balance will change only when covering (buying back)
         await (Holding as any).create([{ 
           userId: order.userId, 
           symbol: order.symbol, 
@@ -321,21 +340,31 @@ async function fillLimitOrder(
   }
 
   if (order.type === 'BUY') {
-    if (user.balance < totalCost) {
-      order.status = 'CANCELLED'
-      order.cancelledAt = new Date()
-      await order.save({ session })
-      return { success: false, message: 'Insufficient balance' }
-    }
-
-    user.balance -= totalCost
-    await user.save({ session })
-
     const holding = await (Holding as any).findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
+    const isCoveringShort = holding && holding.quantity < 0
+
+    if (!isCoveringShort) {
+      // Regular BUY: Check and deduct full amount from balance
+      if (user.balance < totalCost) {
+        order.status = 'CANCELLED'
+        order.cancelledAt = new Date()
+        await order.save({ session })
+        return { success: false, message: 'Insufficient balance' }
+      }
+      user.balance -= totalCost
+      await user.save({ session })
+    }
 
     if (holding) {
       if (holding.quantity < 0) {
         // Covering short position
+        // Calculate P&L: (short_price - cover_price) × quantity
+        // Example: Short at ₹100, cover at ₹90 → Profit = (100-90)×qty = +₹10×qty
+        // Example: Short at ₹100, cover at ₹110 → Loss = (100-110)×qty = -₹10×qty
+        const pnl = (holding.avgPrice - fillPrice) * order.quantity
+        user.balance += pnl // Add profit or subtract loss
+        await user.save({ session })
+        
         holding.quantity += order.quantity
         if (holding.quantity === 0) {
           await (Holding as any).deleteOne({ _id: holding._id }).session(session)
@@ -351,6 +380,7 @@ async function fillLimitOrder(
         await holding.save({ session })
       }
     } else {
+      // New long position
       await (Holding as any).create([{ userId: order.userId, symbol: order.symbol, quantity: order.quantity, avgPrice: fillPrice, productType: order.productType }], { session })
     }
   } else {
@@ -358,7 +388,7 @@ async function fillLimitOrder(
     const holding = await (Holding as any).findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
 
     if (holding) {
-      // Has existing position
+      // Selling existing long position: Add proceeds to balance
       user.balance += totalCost
       await user.save({ session })
 
@@ -369,9 +399,10 @@ async function fillLimitOrder(
         await holding.save({ session })
       }
     } else {
-      // No position - short sell (intraday only)
+      // No position - creating short position (intraday only)
       if (order.productType === 'INTRADAY') {
-        // Short sell: Don't add to balance yet, just create negative holding
+        // Short sell: Don't change balance, just create negative holding
+        // Balance will change only when covering (buying back)
         await (Holding as any).create([{ 
           userId: order.userId, 
           symbol: order.symbol, 

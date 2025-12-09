@@ -8,9 +8,28 @@ import GoogleAnalytics from '@/components/GoogleAnalytics'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'PaperTrade India – Free Stock Market Simulator | NSE Paper Trading with ₹1,00,000 Virtual Cash',
-  description: 'PaperTrade India is a free stock market simulator for NSE traders. Practice intraday & delivery trading using ₹1,00,000 virtual cash, real market data, live charts, auto square-off, holdings, P&L, and leaderboard. Perfect for beginners learning the Indian stock market.',
-  keywords: ['best free paper trading website for indian stock market', 'practice trading stocks india', 'stock simulator india', 'paper trading india', 'nse paper trading', 'virtual stock trading', 'NSE stocks', 'stock market simulator', 'learn trading', 'practice trading', 'Indian stock market', 'free trading platform', 'stock trading game', 'intraday trading', 'delivery trading'],
+  title:
+    'PaperTrade India – Free Stock Market Simulator | NSE Paper Trading with ₹1,00,000 Virtual Cash',
+  description:
+    'PaperTrade India is a free stock market simulator for NSE traders. Practice intraday & delivery trading using ₹1,00,000 virtual cash, real market data, live charts, auto square-off, holdings, P&L, and leaderboard. Perfect for beginners learning the Indian stock market.',
+  keywords: [
+    'best free paper trading website for indian stock market',
+    'practice trading stocks india',
+    'stock simulator india',
+    'paper trading india',
+    'nse paper trading',
+    'virtual stock trading',
+    'free paper trading',
+    'NSE stocks',
+    'stock market simulator',
+    'learn trading',
+    'practice trading',
+    'Indian stock market',
+    'free trading platform',
+    'stock trading game',
+    'intraday trading',
+    'delivery trading',
+  ],
   authors: [{ name: 'PaperTrade India' }],
   creator: 'PaperTrade India',
   publisher: 'PaperTrade India',
@@ -23,19 +42,23 @@ export const metadata: Metadata = {
     locale: 'en_IN',
     url: 'https://papertrade-india.vercel.app',
     title: 'PaperTrade India – Free Stock Market Simulator | NSE Paper Trading',
-    description: 'PaperTrade India is a free stock market simulator for NSE traders. Practice intraday & delivery trading using ₹1,00,000 virtual cash, real market data, live charts, auto square-off, holdings, P&L, and leaderboard.',
+    description:
+      'PaperTrade India is a free stock market simulator for NSE traders. Practice intraday & delivery trading using ₹1,00,000 virtual cash, real market data, live charts, auto square-off, holdings, P&L, and leaderboard.',
     siteName: 'PaperTrade India',
-    images: [{
-      url: '/logo.svg',
-      width: 1200,
-      height: 630,
-      alt: 'PaperTrade India - Virtual Stock Trading',
-    }],
+    images: [
+      {
+        url: '/logo.svg',
+        width: 1200,
+        height: 630,
+        alt: 'PaperTrade India - Virtual Stock Trading',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'PaperTrade India - Free Virtual Stock Trading',
-    description: 'Master Indian stock market with ₹1L virtual cash. Trade 100+ NSE stocks risk-free.',
+    description:
+      'Master Indian stock market with ₹1L virtual cash. Trade 100+ NSE stocks risk-free.',
     images: ['/logo.svg'],
   },
   icons: {
