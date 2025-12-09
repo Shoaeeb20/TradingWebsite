@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /portfolio
+
+Sitemap: https://papertrade-india.vercel.app/sitemap.xml

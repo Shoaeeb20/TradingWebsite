@@ -15,6 +15,7 @@ export default async function Portfolio() {
   await connectDB()
   const user = await User.findOne({ email: session.user.email }).lean()
   const holdings = await Holding.find({ userId: user?._id }).lean()
+  const userId = user?._id.toString()
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -32,7 +33,9 @@ export default async function Portfolio() {
           symbol: h.symbol,
           quantity: h.quantity,
           avgPrice: h.avgPrice,
+          productType: h.productType,
         }))}
+        userId={userId}
       />
     </div>
   )

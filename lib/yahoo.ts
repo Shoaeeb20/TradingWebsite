@@ -14,7 +14,7 @@ function toYahooSymbol(symbol: string): string {
   return symbol.includes('.') ? symbol : `${symbol}.NS`
 }
 
-export async function fetchQuote(symbol: string, retries = 3): Promise<YahooQuote | null> {
+export async function fetchQuote(symbol: string, retries = 3, range = '1d'): Promise<YahooQuote | null> {
   const yahooSymbol = toYahooSymbol(symbol)
   
   for (let attempt = 0; attempt < retries; attempt++) {
@@ -22,7 +22,7 @@ export async function fetchQuote(symbol: string, retries = 3): Promise<YahooQuot
       const response = await axios.get(`${YAHOO_CHART_URL}/${yahooSymbol}`, {
         params: {
           interval: '1d',
-          range: '1d',
+          range: range,
         },
         timeout: 5000,
       })
@@ -60,6 +60,37 @@ export async function fetchQuote(symbol: string, retries = 3): Promise<YahooQuot
   }
 
   return null
+}
+
+export async function fetchHistoricalData(symbol: string, range: string): Promise<any[] | null> {
+  const yahooSymbol = toYahooSymbol(symbol)
+  
+  try {
+    const response = await axios.get(`${YAHOO_CHART_URL}/${yahooSymbol}`, {
+      params: { interval: '1d', range },
+      timeout: 5000,
+    })
+
+    const result = response.data?.chart?.result?.[0]
+    if (!result) return null
+
+    const timestamps = result.timestamp
+    const quotes = result.indicators?.quote?.[0]
+    
+    if (!timestamps || !quotes) return null
+
+    return timestamps.map((ts: number, i: number) => ({
+      time: ts * 1000,
+      price: quotes.close[i],
+      open: quotes.open[i],
+      high: quotes.high[i],
+      low: quotes.low[i],
+      volume: quotes.volume[i]
+    })).filter((d: any) => d.price)
+  } catch (error) {
+    console.error(`Failed to fetch historical data for ${symbol}:`, error)
+    return null
+  }
 }
 
 export async function fetchMultipleQuotes(symbols: string[]): Promise<Map<string, YahooQuote>> {

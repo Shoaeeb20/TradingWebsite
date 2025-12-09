@@ -67,10 +67,14 @@ async function validateOrder(
   }
 
   if (type === 'SELL') {
-    const holding = await Holding.findOne({ userId, symbol, productType })
-    if (!holding || holding.quantity < quantity) {
-      return { valid: false, error: `Insufficient ${productType.toLowerCase()} holdings` }
+    // Block delivery short selling
+    if (productType === 'DELIVERY') {
+      const holding = await Holding.findOne({ userId, symbol, productType: 'DELIVERY' })
+      if (!holding || holding.quantity < quantity) {
+        return { valid: false, error: 'Insufficient delivery holdings. Short selling only allowed for intraday.' }
+      }
     }
+    // Intraday short selling allowed (no validation needed)
   }
 
   return { valid: true }
@@ -182,29 +186,56 @@ async function fillMarketOrder(
     const holding = await Holding.findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
 
     if (holding) {
-      const newQuantity = holding.quantity + order.quantity
-      const newAvgPrice = (holding.avgPrice * holding.quantity + fillPrice * order.quantity) / newQuantity
-      holding.quantity = newQuantity
-      holding.avgPrice = newAvgPrice
-      await holding.save({ session })
+      if (holding.quantity < 0) {
+        // Covering short position
+        holding.quantity += order.quantity
+        if (holding.quantity === 0) {
+          await Holding.deleteOne({ _id: holding._id }).session(session)
+        } else {
+          await holding.save({ session })
+        }
+      } else {
+        // Adding to long position
+        const newQuantity = holding.quantity + order.quantity
+        const newAvgPrice = (holding.avgPrice * holding.quantity + fillPrice * order.quantity) / newQuantity
+        holding.quantity = newQuantity
+        holding.avgPrice = newAvgPrice
+        await holding.save({ session })
+      }
     } else {
       await Holding.create([{ userId: order.userId, symbol: order.symbol, quantity: order.quantity, avgPrice: fillPrice, productType: order.productType }], { session })
     }
   } else {
+    // SELL order
     const holding = await Holding.findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
 
-    if (!holding || holding.quantity < order.quantity) {
-      return { success: false, message: `Insufficient ${order.productType.toLowerCase()} holdings` }
-    }
+    if (holding) {
+      // Has existing position - reduce it
+      user.balance += totalCost
+      await user.save({ session })
 
-    user.balance += totalCost
-    await user.save({ session })
-
-    holding.quantity -= order.quantity
-    if (holding.quantity === 0) {
-      await Holding.deleteOne({ _id: holding._id }).session(session)
+      holding.quantity -= order.quantity
+      if (holding.quantity === 0) {
+        await Holding.deleteOne({ _id: holding._id }).session(session)
+      } else {
+        await holding.save({ session })
+      }
     } else {
-      await holding.save({ session })
+      // No position - create short position (intraday only)
+      if (order.productType === 'INTRADAY') {
+        user.balance += totalCost
+        await user.save({ session })
+
+        await Holding.create([{ 
+          userId: order.userId, 
+          symbol: order.symbol, 
+          quantity: -order.quantity, 
+          avgPrice: fillPrice, 
+          productType: order.productType 
+        }], { session })
+      } else {
+        return { success: false, message: 'Insufficient delivery holdings' }
+      }
     }
   }
 
@@ -305,32 +336,59 @@ async function fillLimitOrder(
     const holding = await Holding.findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
 
     if (holding) {
-      const newQuantity = holding.quantity + order.quantity
-      const newAvgPrice = (holding.avgPrice * holding.quantity + fillPrice * order.quantity) / newQuantity
-      holding.quantity = newQuantity
-      holding.avgPrice = newAvgPrice
-      await holding.save({ session })
+      if (holding.quantity < 0) {
+        // Covering short position
+        holding.quantity += order.quantity
+        if (holding.quantity === 0) {
+          await Holding.deleteOne({ _id: holding._id }).session(session)
+        } else {
+          await holding.save({ session })
+        }
+      } else {
+        // Adding to long position
+        const newQuantity = holding.quantity + order.quantity
+        const newAvgPrice = (holding.avgPrice * holding.quantity + fillPrice * order.quantity) / newQuantity
+        holding.quantity = newQuantity
+        holding.avgPrice = newAvgPrice
+        await holding.save({ session })
+      }
     } else {
       await Holding.create([{ userId: order.userId, symbol: order.symbol, quantity: order.quantity, avgPrice: fillPrice, productType: order.productType }], { session })
     }
   } else {
+    // SELL order (limit)
     const holding = await Holding.findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
 
-    if (!holding || holding.quantity < order.quantity) {
-      order.status = 'CANCELLED'
-      order.cancelledAt = new Date()
-      await order.save({ session })
-      return { success: false, message: `Insufficient ${order.productType.toLowerCase()} holdings` }
-    }
+    if (holding) {
+      // Has existing position
+      user.balance += totalCost
+      await user.save({ session })
 
-    user.balance += totalCost
-    await user.save({ session })
-
-    holding.quantity -= order.quantity
-    if (holding.quantity === 0) {
-      await Holding.deleteOne({ _id: holding._id }).session(session)
+      holding.quantity -= order.quantity
+      if (holding.quantity === 0) {
+        await Holding.deleteOne({ _id: holding._id }).session(session)
+      } else {
+        await holding.save({ session })
+      }
     } else {
-      await holding.save({ session })
+      // No position - short sell (intraday only)
+      if (order.productType === 'INTRADAY') {
+        user.balance += totalCost
+        await user.save({ session })
+
+        await Holding.create([{ 
+          userId: order.userId, 
+          symbol: order.symbol, 
+          quantity: -order.quantity, 
+          avgPrice: fillPrice, 
+          productType: order.productType 
+        }], { session })
+      } else {
+        order.status = 'CANCELLED'
+        order.cancelledAt = new Date()
+        await order.save({ session })
+        return { success: false, message: 'Insufficient delivery holdings' }
+      }
     }
   }
 
