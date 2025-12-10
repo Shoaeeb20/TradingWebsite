@@ -8,23 +8,27 @@ export const dynamic = 'force-dynamic'
 
 export default async function Market({ searchParams }: { searchParams: { q?: string } }) {
   await connectDB()
-  
+
   const query = searchParams.q || ''
   const filter: any = { active: true }
-  
+
   if (query) {
     filter.$or = [
       { symbol: { $regex: query, $options: 'i' } },
-      { name: { $regex: query, $options: 'i' } }
+      { name: { $regex: query, $options: 'i' } },
     ]
   }
-  
+
   const stocks = await (Stock as any).find(filter).sort({ symbol: 1 }).limit(50).lean()
+  const totalStocks = await (Stock as any).countDocuments({ active: true })
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Market</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Market</h1>
+          <p className="text-gray-600 mt-1">{totalStocks} NSE stocks available for trading</p>
+        </div>
         <SearchBox />
       </div>
 
@@ -35,11 +39,9 @@ export default async function Market({ searchParams }: { searchParams: { q?: str
           </Link>
         ))}
       </div>
-      
+
       {stocks.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          No stocks found matching "{query}"
-        </div>
+        <div className="text-center py-12 text-gray-500">No stocks found matching "{query}"</div>
       )}
     </div>
   )
