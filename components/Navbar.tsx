@@ -11,30 +11,60 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-8">
-            <Link href="/" className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hover:scale-105 transition-transform">
+            <Link
+              href="/"
+              className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hover:scale-105 transition-transform"
+            >
               PaperTrade 🇮🇳
             </Link>
-            <Link href="/market-info" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+            <Link
+              href="/market-info"
+              className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+            >
               Market Info
             </Link>
-            <Link href="/simulator-info" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+            <Link
+              href="/simulator-info"
+              className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+            >
+              Simulator info
+            </Link>
+            <Link
+              href="/simulator"
+              className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+            >
               Simulator
             </Link>
-            <Link href="/leaderboard-info" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+            <Link
+              href="/leaderboard-info"
+              className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+            >
               Performance
             </Link>
             {session && (
               <>
-                <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                <Link
+                  href="/dashboard"
+                  className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                >
                   Dashboard
                 </Link>
-                <Link href="/market" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                <Link
+                  href="/market"
+                  className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                >
                   Market
                 </Link>
-                <Link href="/portfolio" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                <Link
+                  href="/portfolio"
+                  className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                >
                   Portfolio
                 </Link>
-                <Link href="/leaderboard" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                <Link
+                  href="/leaderboard"
+                  className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                >
                   Leaderboard
                 </Link>
               </>
@@ -44,7 +74,9 @@ export default function Navbar() {
           <div className="flex items-center space-x-4">
             {session ? (
               <>
-                <span className="text-sm font-medium text-gray-700 px-3 py-1 bg-gray-100 rounded-full">{session.user?.name}</span>
+                <span className="text-sm font-medium text-gray-700 px-3 py-1 bg-gray-100 rounded-full">
+                  {session.user?.name}
+                </span>
                 <button onClick={() => signOut()} className="btn btn-secondary text-sm">
                   Sign Out
                 </button>
