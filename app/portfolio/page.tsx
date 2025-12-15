@@ -5,6 +5,7 @@ import { connectDB } from '@/lib/db'
 import User from '@/models/User'
 import Holding from '@/models/Holding'
 import PortfolioTable from '@/components/PortfolioTable'
+import SquareOffButton from '@/components/SquareOffButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,6 +19,7 @@ export default async function Portfolio() {
 
   const holdings = await (Holding as any).find({ userId: user._id }).lean()
   const userId = user._id.toString()
+  const hasIntradayPositions = holdings.some((h: any) => h.productType === 'INTRADAY')
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -29,6 +31,25 @@ export default async function Portfolio() {
           ₹{user.balance.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
         </div>
       </div>
+
+      {/* Square-off Section */}
+      {hasIntradayPositions && (
+        <div className="card mb-6 bg-yellow-50 border-yellow-200">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-yellow-800 mb-2">Intraday Square-off</h3>
+              <p className="text-sm text-yellow-700 mb-3">
+                ⚠️ <strong>Disclaimer:</strong> Automatic intraday square-off at 3:20 PM may not work reliably on the free tier. 
+                Please use the manual square-off button below to close your intraday positions before market close.
+              </p>
+              <p className="text-xs text-yellow-600">
+                Note: This will only square-off INTRADAY positions. Your DELIVERY holdings will remain unchanged.
+              </p>
+            </div>
+            <SquareOffButton />
+          </div>
+        </div>
+      )}
 
       <PortfolioTable
         holdings={holdings.map((h) => ({
