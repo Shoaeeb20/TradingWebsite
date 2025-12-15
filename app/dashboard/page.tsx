@@ -9,6 +9,7 @@ import Order from '@/models/Order'
 import PortfolioSummary from '@/components/PortfolioSummary'
 import RecentTrades from '@/components/RecentTrades'
 import ActiveOrders from '@/components/ActiveOrders'
+import GrowwReferral from '@/components/GrowwReferral'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,6 +43,11 @@ export default async function Dashboard() {
           avgPrice: h.avgPrice,
         }))}
       />
+
+      {/* Groww Referral */}
+      <div className="mt-8">
+        <GrowwReferral />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <ActiveOrders

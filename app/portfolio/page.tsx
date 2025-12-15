@@ -6,6 +6,7 @@ import User from '@/models/User'
 import Holding from '@/models/Holding'
 import PortfolioTable from '@/components/PortfolioTable'
 import SquareOffButton from '@/components/SquareOffButton'
+import GrowwReferral from '@/components/GrowwReferral'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,6 +32,9 @@ export default async function Portfolio() {
           ₹{user.balance.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
         </div>
       </div>
+
+      {/* Groww Referral */}
+      <GrowwReferral />
 
       {/* Square-off Section */}
       {hasIntradayPositions && (
