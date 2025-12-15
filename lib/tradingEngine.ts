@@ -7,6 +7,8 @@ import User from '@/models/User'
 import Stock from '@/models/Stock'
 import { fetchQuote } from './yahoo'
 import { isMarketOpen } from './marketHours'
+// NEW: Import cached price functions
+import { getCachedPrice } from './priceCache'
 
 export interface OrderPayload {
   symbol: string
@@ -58,11 +60,19 @@ async function validateOrder(
       // Only check balance if NOT covering a short position
       let estimatedCost: number
       if (orderType === 'MARKET') {
-        const quote = await fetchQuote(symbol)
-        if (!quote) {
+        // OLD CODE (Direct Yahoo API) - REMOVE AFTER TESTING
+        // const quote = await fetchQuote(symbol)
+        // if (!quote) {
+        //   return { valid: false, error: 'Unable to fetch current price' }
+        // }
+        // estimatedCost = quote.price * quantity
+        
+        // NEW CODE (Cached Prices)
+        const cachedPrice = await getCachedPrice(symbol)
+        if (!cachedPrice) {
           return { valid: false, error: 'Unable to fetch current price' }
         }
-        estimatedCost = quote.price * quantity
+        estimatedCost = cachedPrice * quantity
       } else {
         estimatedCost = price! * quantity
       }
@@ -169,12 +179,19 @@ async function fillMarketOrder(
     return { success: false, message: 'Order not found' }
   }
 
-  const quote = await fetchQuote(order.symbol)
-  if (!quote) {
+  // OLD CODE (Direct Yahoo API) - REMOVE AFTER TESTING
+  // const quote = await fetchQuote(order.symbol)
+  // if (!quote) {
+  //   return { success: false, message: 'Unable to fetch market price' }
+  // }
+  // const fillPrice = quote.price
+  
+  // NEW CODE (Cached Prices)
+  const cachedPrice = await getCachedPrice(order.symbol)
+  if (!cachedPrice) {
     return { success: false, message: 'Unable to fetch market price' }
   }
-
-  const fillPrice = quote.price
+  const fillPrice = cachedPrice
   const totalCost = fillPrice * order.quantity
 
   const user = await (User as any).findById(order.userId).session(session)
@@ -270,10 +287,15 @@ async function fillMarketOrder(
 export async function matchLimitOrders(symbol: string): Promise<number> {
   await connectDB()
 
-  const quote = await fetchQuote(symbol)
-  if (!quote) return 0
-
-  const currentPrice = quote.price
+  // OLD CODE (Direct Yahoo API) - REMOVE AFTER TESTING
+  // const quote = await fetchQuote(symbol)
+  // if (!quote) return 0
+  // const currentPrice = quote.price
+  
+  // NEW CODE (Cached Prices)
+  const cachedPrice = await getCachedPrice(symbol)
+  if (!cachedPrice) return 0
+  const currentPrice = cachedPrice
   let matchedCount = 0
 
   const buyOrders = await (Order as any).find({ symbol, type: 'BUY', orderType: 'LIMIT', status: 'PENDING', price: { $gte: currentPrice } }).sort({ price: -1, createdAt: 1 })

@@ -10,6 +10,16 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // Debug: Log to verify env vars are loaded
+      ...(process.env.NODE_ENV === 'development' && {
+        authorization: {
+          params: {
+            prompt: "consent",
+            access_type: "offline",
+            response_type: "code"
+          }
+        }
+      })
     }),
     CredentialsProvider({
       name: 'Credentials',
