@@ -25,8 +25,9 @@ export default async function Dashboard() {
   const holdings = await (Holding as any).find({ userId: user._id }).lean()
   const recentTrades = await (Trade as any).find({ userId: user._id })
     .sort({ createdAt: -1 })
-    .limit(10)
+    .limit(25)
     .lean()
+  const totalTrades = await (Trade as any).countDocuments({ userId: user._id })
   const activeOrders = await (Order as any).find({ userId: user._id, status: 'PENDING' })
     .sort({ createdAt: -1 })
     .lean()
@@ -71,6 +72,7 @@ export default async function Dashboard() {
             total: t.total,
             createdAt: t.createdAt.toISOString(),
           }))}
+          totalTrades={totalTrades}
         />
       </div>
     </div>
