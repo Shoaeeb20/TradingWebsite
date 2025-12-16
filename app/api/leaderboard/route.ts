@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       .lean()
 
     // Get unique symbols for price fetching
-    const symbols = [...new Set(holdings.map((h: any) => h.symbol))]
+    const symbols = [...new Set(holdings.map((h: any) => h.symbol))] as string[]
     const prices = await getCachedPrices(symbols)
 
     // Calculate holdings value for each user
