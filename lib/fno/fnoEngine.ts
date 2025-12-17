@@ -18,10 +18,11 @@ export async function executeFnoTrade(trade: FnoTrade): Promise<{
 }> {
   try {
     // Check market hours
-    if (!isMarketOpen()) {
-      return { success: false, message: 'Market is closed' }
+    const marketStatus = isMarketOpen()
+    if (!marketStatus.open) {
+      return { success: false, message: marketStatus.message || 'Market is closed' }
     }
-    
+
     // Check if contract is expired before execution
     if (isExpired(trade.contract.expiry)) {
       return { success: false, message: 'Contract expired' }
@@ -30,7 +31,7 @@ export async function executeFnoTrade(trade: FnoTrade): Promise<{
     // Get current spot prices
     const spotPrices = await getSpotPrices()
     const spotPrice = spotPrices[trade.contract.index]
-    
+
     if (!spotPrice) {
       return { success: false, message: 'Unable to fetch spot price' }
     }
@@ -179,7 +180,7 @@ export async function getUserFnoPositions(): Promise<FnoPosition[]> {
     for (const position of positions) {
       const contract = position.contract as FnoContract
       const spotPrice = spotPrices[contract.index]
-      
+
       if (!spotPrice) {
         continue // Skip if spot price unavailable
       }
@@ -268,22 +269,22 @@ export async function closeFnoPosition(
     // Get current spot prices
     const spotPrices = await getSpotPrices()
     const spotPrice = spotPrices[position.contract.index]
-    
+
     if (!spotPrice) {
       return { success: false, message: 'Unable to fetch spot price' }
     }
 
     // Calculate current option price
     const currentPrice = calculateOptionPrice(position.contract, spotPrice)
-    
+
     // Calculate P&L
     const pnl = (currentPrice - position.avgPrice) * position.quantity
-    
+
     // Update user F&O balance with P&L
     await (User as any).findByIdAndUpdate(actualUserId, {
-      $inc: { fnoBalance: pnl + (position.avgPrice * Math.abs(position.quantity)) }
+      $inc: { fnoBalance: pnl + position.avgPrice * Math.abs(position.quantity) },
     })
-    
+
     // Delete the position
     await FnoPositionModel.deleteOne({ _id: positionId })
 
