@@ -1,16 +1,32 @@
 export function isMarketOpen(): { open: boolean; message?: string } {
   const now = new Date()
-  const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
   
-  const day = istTime.getDay()
-  if (day === 0 || day === 6) {
+  // Get IST day of week using Intl.DateTimeFormat
+  const dayFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    weekday: 'short'
+  })
+  
+  const dayName = dayFormatter.format(now)
+  const isWeekend = dayName === 'Sat' || dayName === 'Sun'
+  
+  if (isWeekend) {
     return { open: false, message: 'Market is closed on weekends' }
   }
   
-  const hours = istTime.getHours()
-  const minutes = istTime.getMinutes()
-  const timeInMinutes = hours * 60 + minutes
+  // Get IST time using Intl.DateTimeFormat
+  const timeFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  })
   
+  const parts = timeFormatter.formatToParts(now)
+  const hours = parseInt(parts.find(p => p.type === 'hour')?.value || '0')
+  const minutes = parseInt(parts.find(p => p.type === 'minute')?.value || '0')
+  
+  const timeInMinutes = hours * 60 + minutes
   const marketOpen = 9 * 60 + 15  // 9:15 AM
   const marketClose = 15 * 60 + 30 // 3:30 PM
   

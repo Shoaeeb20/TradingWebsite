@@ -1,17 +1,42 @@
-// NSE F&O market hours: 9:15 AM to 3:30 PM IST (Monday to Friday)
-export function isMarketOpen(): boolean {
+export function isMarketOpen(): { open: boolean; message?: string } {
   const now = new Date()
-  const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000)) // Convert to IST
-  
-  const day = istTime.getDay() // 0 = Sunday, 6 = Saturday
-  if (day === 0 || day === 6) return false // Weekend
-  
-  const hours = istTime.getHours()
-  const minutes = istTime.getMinutes()
+
+  // Get IST day of week using Intl.DateTimeFormat
+  const dayFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    weekday: 'short',
+  })
+
+  const dayName = dayFormatter.format(now)
+  const isWeekend = dayName === 'Sat' || dayName === 'Sun'
+
+  if (isWeekend) {
+    return { open: false, message: 'Market is closed on weekends' }
+  }
+
+  // Get IST time using Intl.DateTimeFormat
+  const timeFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+
+  const parts = timeFormatter.formatToParts(now)
+  const hours = parseInt(parts.find((p) => p.type === 'hour')?.value || '0')
+  const minutes = parseInt(parts.find((p) => p.type === 'minute')?.value || '0')
+
   const timeInMinutes = hours * 60 + minutes
-  
-  const marketStart = 9 * 60 + 15 // 9:15 AM
-  const marketEnd = 15 * 60 + 30 // 3:30 PM
-  
-  return timeInMinutes >= marketStart && timeInMinutes <= marketEnd
+  const marketOpen = 9 * 60 + 15 // 9:15 AM
+  const marketClose = 15 * 60 + 30 // 3:30 PM
+
+  if (timeInMinutes < marketOpen) {
+    return { open: false, message: 'Market opens at 9:15 AM IST' }
+  }
+
+  if (timeInMinutes > marketClose) {
+    return { open: false, message: 'Market closed at 3:30 PM IST' }
+  }
+
+  return { open: true }
 }
