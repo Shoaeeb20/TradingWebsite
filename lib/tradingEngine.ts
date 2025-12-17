@@ -5,7 +5,7 @@ import Trade from '@/models/Trade'
 import Holding from '@/models/Holding'
 import User from '@/models/User'
 import Stock from '@/models/Stock'
-import { fetchQuote } from './yahoo'
+
 import { isMarketOpen } from './marketHours'
 // NEW: Import cached price functions
 import { getCachedPrice } from './priceCache'
@@ -55,7 +55,7 @@ async function validateOrder(
     // Check if covering a short position
     const holding = await (Holding as any).findOne({ userId, symbol, productType })
     const isCoveringShort = holding && holding.quantity < 0
-    
+
     if (!isCoveringShort) {
       // Only check balance if NOT covering a short position
       let estimatedCost: number
@@ -66,7 +66,7 @@ async function validateOrder(
         //   return { valid: false, error: 'Unable to fetch current price' }
         // }
         // estimatedCost = quote.price * quantity
-        
+
         // NEW CODE (Cached Prices)
         const cachedPrice = await getCachedPrice(symbol)
         if (!cachedPrice) {
@@ -88,7 +88,10 @@ async function validateOrder(
     if (productType === 'DELIVERY') {
       const holding = await (Holding as any).findOne({ userId, symbol, productType: 'DELIVERY' })
       if (!holding || holding.quantity < quantity) {
-        return { valid: false, error: 'Insufficient delivery holdings. Short selling only allowed for intraday.' }
+        return {
+          valid: false,
+          error: 'Insufficient delivery holdings. Short selling only allowed for intraday.',
+        }
       }
     }
     // Intraday short selling allowed (no validation needed)
@@ -134,7 +137,7 @@ export async function placeOrder(userId: string, payload: OrderPayload): Promise
 
     if (payload.orderType === 'MARKET') {
       const fillResult = await fillMarketOrder(orderId, session)
-      
+
       if (fillResult.success) {
         await session.commitTransaction()
         return {
@@ -185,7 +188,7 @@ async function fillMarketOrder(
   //   return { success: false, message: 'Unable to fetch market price' }
   // }
   // const fillPrice = quote.price
-  
+
   // NEW CODE (Cached Prices)
   const cachedPrice = await getCachedPrice(order.symbol)
   if (!cachedPrice) {
@@ -200,7 +203,9 @@ async function fillMarketOrder(
   }
 
   if (order.type === 'BUY') {
-    const holding = await (Holding as any).findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
+    const holding = await (Holding as any)
+      .findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType })
+      .session(session)
     const isCoveringShort = holding && holding.quantity < 0
 
     if (!isCoveringShort) {
@@ -214,14 +219,10 @@ async function fillMarketOrder(
 
     if (holding) {
       if (holding.quantity < 0) {
-        // Covering short position
-        // Calculate P&L: (short_price - cover_price) × quantity
-        // Example: Short at ₹100, cover at ₹90 → Profit = (100-90)×qty = +₹10×qty
-        // Example: Short at ₹100, cover at ₹110 → Loss = (100-110)×qty = -₹10×qty
-        const pnl = (holding.avgPrice - fillPrice) * order.quantity
-        user.balance += pnl // Add profit or subtract loss
+        // Covering short position: Pay full cost and settle P&L
+        user.balance -= totalCost
         await user.save({ session })
-        
+
         holding.quantity += order.quantity
         if (holding.quantity === 0) {
           await (Holding as any).deleteOne({ _id: holding._id }).session(session)
@@ -231,18 +232,32 @@ async function fillMarketOrder(
       } else {
         // Adding to long position
         const newQuantity = holding.quantity + order.quantity
-        const newAvgPrice = (holding.avgPrice * holding.quantity + fillPrice * order.quantity) / newQuantity
+        const newAvgPrice =
+          (holding.avgPrice * holding.quantity + fillPrice * order.quantity) / newQuantity
         holding.quantity = newQuantity
         holding.avgPrice = newAvgPrice
         await holding.save({ session })
       }
     } else {
       // New long position
-      await (Holding as any).create([{ userId: order.userId, symbol: order.symbol, quantity: order.quantity, avgPrice: fillPrice, productType: order.productType }], { session })
+      await (Holding as any).create(
+        [
+          {
+            userId: order.userId,
+            symbol: order.symbol,
+            quantity: order.quantity,
+            avgPrice: fillPrice,
+            productType: order.productType,
+          },
+        ],
+        { session }
+      )
     }
   } else {
     // SELL order
-    const holding = await (Holding as any).findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
+    const holding = await (Holding as any)
+      .findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType })
+      .session(session)
 
     if (holding) {
       // Selling existing long position: Add proceeds to balance
@@ -258,22 +273,42 @@ async function fillMarketOrder(
     } else {
       // No position - creating short position (intraday only)
       if (order.productType === 'INTRADAY') {
-        // Short sell: Don't change balance, just create negative holding
-        // Balance will change only when covering (buying back)
-        await (Holding as any).create([{ 
-          userId: order.userId, 
-          symbol: order.symbol, 
-          quantity: -order.quantity, 
-          avgPrice: fillPrice, 
-          productType: order.productType 
-        }], { session })
+        // Short sell: Credit proceeds to balance and create negative holding
+        user.balance += totalCost
+        await user.save({ session })
+
+        await (Holding as any).create(
+          [
+            {
+              userId: order.userId,
+              symbol: order.symbol,
+              quantity: -order.quantity,
+              avgPrice: fillPrice,
+              productType: order.productType,
+            },
+          ],
+          { session }
+        )
       } else {
         return { success: false, message: 'Insufficient delivery holdings' }
       }
     }
   }
 
-  await (Trade as any).create([{ orderId: order._id, userId: order.userId, symbol: order.symbol, type: order.type, quantity: order.quantity, price: fillPrice, total: totalCost }], { session })
+  await (Trade as any).create(
+    [
+      {
+        orderId: order._id,
+        userId: order.userId,
+        symbol: order.symbol,
+        type: order.type,
+        quantity: order.quantity,
+        price: fillPrice,
+        total: totalCost,
+      },
+    ],
+    { session }
+  )
 
   order.status = 'FILLED'
   order.filledQuantity = order.quantity
@@ -291,15 +326,31 @@ export async function matchLimitOrders(symbol: string): Promise<number> {
   // const quote = await fetchQuote(symbol)
   // if (!quote) return 0
   // const currentPrice = quote.price
-  
+
   // NEW CODE (Cached Prices)
   const cachedPrice = await getCachedPrice(symbol)
   if (!cachedPrice) return 0
   const currentPrice = cachedPrice
   let matchedCount = 0
 
-  const buyOrders = await (Order as any).find({ symbol, type: 'BUY', orderType: 'LIMIT', status: 'PENDING', price: { $gte: currentPrice } }).sort({ price: -1, createdAt: 1 })
-  const sellOrders = await (Order as any).find({ symbol, type: 'SELL', orderType: 'LIMIT', status: 'PENDING', price: { $lte: currentPrice } }).sort({ price: 1, createdAt: 1 })
+  const buyOrders = await (Order as any)
+    .find({
+      symbol,
+      type: 'BUY',
+      orderType: 'LIMIT',
+      status: 'PENDING',
+      price: { $gte: currentPrice },
+    })
+    .sort({ price: -1, createdAt: 1 })
+  const sellOrders = await (Order as any)
+    .find({
+      symbol,
+      type: 'SELL',
+      orderType: 'LIMIT',
+      status: 'PENDING',
+      price: { $lte: currentPrice },
+    })
+    .sort({ price: 1, createdAt: 1 })
 
   for (const order of buyOrders) {
     const session = await mongoose.startSession()
@@ -362,7 +413,9 @@ async function fillLimitOrder(
   }
 
   if (order.type === 'BUY') {
-    const holding = await (Holding as any).findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
+    const holding = await (Holding as any)
+      .findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType })
+      .session(session)
     const isCoveringShort = holding && holding.quantity < 0
 
     if (!isCoveringShort) {
@@ -379,14 +432,10 @@ async function fillLimitOrder(
 
     if (holding) {
       if (holding.quantity < 0) {
-        // Covering short position
-        // Calculate P&L: (short_price - cover_price) × quantity
-        // Example: Short at ₹100, cover at ₹90 → Profit = (100-90)×qty = +₹10×qty
-        // Example: Short at ₹100, cover at ₹110 → Loss = (100-110)×qty = -₹10×qty
-        const pnl = (holding.avgPrice - fillPrice) * order.quantity
-        user.balance += pnl // Add profit or subtract loss
+        // Covering short position: Pay full cost and settle P&L
+        user.balance -= totalCost
         await user.save({ session })
-        
+
         holding.quantity += order.quantity
         if (holding.quantity === 0) {
           await (Holding as any).deleteOne({ _id: holding._id }).session(session)
@@ -396,18 +445,32 @@ async function fillLimitOrder(
       } else {
         // Adding to long position
         const newQuantity = holding.quantity + order.quantity
-        const newAvgPrice = (holding.avgPrice * holding.quantity + fillPrice * order.quantity) / newQuantity
+        const newAvgPrice =
+          (holding.avgPrice * holding.quantity + fillPrice * order.quantity) / newQuantity
         holding.quantity = newQuantity
         holding.avgPrice = newAvgPrice
         await holding.save({ session })
       }
     } else {
       // New long position
-      await (Holding as any).create([{ userId: order.userId, symbol: order.symbol, quantity: order.quantity, avgPrice: fillPrice, productType: order.productType }], { session })
+      await (Holding as any).create(
+        [
+          {
+            userId: order.userId,
+            symbol: order.symbol,
+            quantity: order.quantity,
+            avgPrice: fillPrice,
+            productType: order.productType,
+          },
+        ],
+        { session }
+      )
     }
   } else {
     // SELL order (limit)
-    const holding = await (Holding as any).findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType }).session(session)
+    const holding = await (Holding as any)
+      .findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType })
+      .session(session)
 
     if (holding) {
       // Selling existing long position: Add proceeds to balance
@@ -423,15 +486,22 @@ async function fillLimitOrder(
     } else {
       // No position - creating short position (intraday only)
       if (order.productType === 'INTRADAY') {
-        // Short sell: Don't change balance, just create negative holding
-        // Balance will change only when covering (buying back)
-        await (Holding as any).create([{ 
-          userId: order.userId, 
-          symbol: order.symbol, 
-          quantity: -order.quantity, 
-          avgPrice: fillPrice, 
-          productType: order.productType 
-        }], { session })
+        // Short sell: Credit proceeds to balance and create negative holding
+        user.balance += totalCost
+        await user.save({ session })
+
+        await (Holding as any).create(
+          [
+            {
+              userId: order.userId,
+              symbol: order.symbol,
+              quantity: -order.quantity,
+              avgPrice: fillPrice,
+              productType: order.productType,
+            },
+          ],
+          { session }
+        )
       } else {
         order.status = 'CANCELLED'
         order.cancelledAt = new Date()
@@ -441,7 +511,20 @@ async function fillLimitOrder(
     }
   }
 
-  await (Trade as any).create([{ orderId: order._id, userId: order.userId, symbol: order.symbol, type: order.type, quantity: order.quantity, price: fillPrice, total: totalCost }], { session })
+  await (Trade as any).create(
+    [
+      {
+        orderId: order._id,
+        userId: order.userId,
+        symbol: order.symbol,
+        type: order.type,
+        quantity: order.quantity,
+        price: fillPrice,
+        total: totalCost,
+      },
+    ],
+    { session }
+  )
 
   order.status = 'FILLED'
   order.filledQuantity = order.quantity

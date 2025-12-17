@@ -41,6 +41,9 @@ export default function Navbar() {
                 <Link href="/market" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
                   Market
                 </Link>
+                <Link href="/fno" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                  F&O
+                </Link>
                 <Link href="/portfolio" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
                   Portfolio
                 </Link>
@@ -131,6 +134,13 @@ export default function Navbar() {
                     onClick={() => setIsOpen(false)}
                   >
                     Market
+                  </Link>
+                  <Link 
+                    href="/fno" 
+                    className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-2 py-1"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    F&O
                   </Link>
                   <Link 
                     href="/portfolio" 

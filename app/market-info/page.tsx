@@ -1,15 +1,10 @@
-import Link from 'next/link'
-import { Metadata } from 'next'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Free NSE Paper Trading Simulator | PaperTrade India',
-  description:
-    'Practice NSE stock trading with real market data. Free virtual trading simulator with ₹1 lakh starting balance. Learn intraday and delivery trading risk-free.',
-  keywords:
-    'free NSE paper trading, virtual stock trading, practice trading India, NSE simulator, stock market practice',
-}
+import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 
 export default function MarketInfoPage() {
+  const { data: session } = useSession()
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -23,10 +18,10 @@ export default function MarketInfoPage() {
             with real NSE data, zero risk, and ₹1,00,000 starting balance.
           </p>
           <Link
-            href="/auth/signin"
+            href={session ? "/market" : "/auth/signin"}
             className="inline-block bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
           >
-            Start Trading Now - It's Free!
+            {session ? "Go to Market" : "Start Trading Now - It's Free!"}
           </Link>
         </div>
 
@@ -141,10 +136,10 @@ export default function MarketInfoPage() {
             Join thousands of traders practicing on India's most realistic paper trading simulator
           </p>
           <Link
-            href="/auth/signin"
+            href={session ? "/market" : "/auth/signin"}
             className="inline-block bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors mr-4"
           >
-            Create Free Account
+            {session ? "Go to Market" : "Create Free Account"}
           </Link>
           <Link
             href="/market"

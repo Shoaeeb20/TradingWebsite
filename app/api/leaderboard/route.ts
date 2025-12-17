@@ -23,21 +23,14 @@ export async function GET(request: NextRequest) {
         }
       : {}
 
-    // Get total count for pagination
-    const totalUsers = await (User as any).countDocuments(searchQuery)
-    const totalPages = Math.ceil(totalUsers / limit)
-    const skip = (page - 1) * limit
-
-    // Get users with pagination
-    const users = await (User as any)
+    // Get ALL users matching search (no pagination yet)
+    const allUsers = await (User as any)
       .find(searchQuery)
-      .select('name email balance')
-      .skip(skip)
-      .limit(limit)
+      .select('name email balance fnoBalance initialCapital totalTopUps totalWithdrawals')
       .lean()
 
-    // Get all holdings for these users
-    const userIds = users.map((u: any) => u._id)
+    // Get ALL holdings for all users
+    const userIds = allUsers.map((u: any) => u._id)
     const holdings = await (Holding as any)
       .find({ userId: { $in: userIds } })
       .lean()
@@ -46,37 +39,67 @@ export async function GET(request: NextRequest) {
     const symbols = [...new Set(holdings.map((h: any) => h.symbol))] as string[]
     const prices = await getCachedPrices(symbols)
 
-    // Calculate holdings value for each user
-    const usersWithHoldings = users.map((user: any) => {
+    // Calculate ROI for ALL users
+    const usersWithReturns = allUsers.map((user: any) => {
       const userHoldings = holdings.filter((h: any) => h.userId.toString() === user._id.toString())
       
       let holdingsValue = 0
       userHoldings.forEach((holding: any) => {
-        const currentPrice = prices[holding.symbol] || holding.avgPrice
+        let currentPrice = prices[holding.symbol]
+        if (!currentPrice) {
+          console.warn(`No price available for ${holding.symbol}, excluding from portfolio`)
+          return
+        }
         holdingsValue += holding.quantity * currentPrice
       })
 
+      const equityBalance = user.balance || 0
+      const fnoBalance = user.fnoBalance || 0
+      const currentValue = equityBalance + fnoBalance + holdingsValue
+      
+      // Calculate ROI
+      const initialCapital = user.initialCapital || 200000
+      const totalTopUps = user.totalTopUps || 0
+      const totalWithdrawals = user.totalWithdrawals || 0
+      const totalInvested = initialCapital + totalTopUps - totalWithdrawals
+      
+      const netPnL = currentValue - totalInvested
+      const returnPercent = totalInvested > 0 ? (netPnL / totalInvested) * 100 : 0
+      
       return {
+        userId: user._id,
         name: user.name,
         email: user.email,
-        balance: user.balance,
+        balance: equityBalance,
+        fnoBalance,
         holdingsValue,
-        totalValue: user.balance + holdingsValue
+        currentValue,
+        totalInvested,
+        netPnL,
+        returnPercent
       }
     })
 
-    // Sort by total value (descending)
-    usersWithHoldings.sort((a, b) => b.totalValue - a.totalValue)
+    // Sort ALL users by return percentage (descending) - skill-based ranking
+    usersWithReturns.sort((a, b) => b.returnPercent - a.returnPercent)
 
-    // Calculate global ranks
-    const startRank = skip + 1
-    const usersWithRanks = usersWithHoldings.map((user, index) => ({
+    // Add correct global ranks
+    const rankedUsers = usersWithReturns.map((user, index) => ({
       ...user,
-      rank: startRank + index
+      rank: index + 1
     }))
 
+    // Now apply pagination to the correctly sorted and ranked results
+    const totalUsers = rankedUsers.length
+    const totalPages = Math.ceil(totalUsers / limit)
+    const skip = (page - 1) * limit
+    const paginatedUsers = rankedUsers.slice(skip, skip + limit)
+
+    // Remove userId from response
+    const responseUsers = paginatedUsers.map(({ userId, ...user }) => user)
+
     return NextResponse.json({
-      users: usersWithRanks,
+      users: responseUsers,
       pagination: {
         page,
         limit,

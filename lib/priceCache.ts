@@ -48,6 +48,13 @@ export async function getCachedPrice(symbol: string): Promise<number | null> {
     console.error(`Failed to fetch price for ${symbol}:`, error)
   }
 
+  // Fallback: Return stale cached price if Yahoo fails
+  const stalePrice = await (Price as any).findOne({ symbol }).sort({ updatedAt: -1 })
+  if (stalePrice) {
+    console.log(`⚠️ Using stale price for ${symbol} (${Math.round((Date.now() - stalePrice.updatedAt.getTime()) / 60000)} minutes old)`)
+    return stalePrice.price
+  }
+
   return null
 }
 
@@ -84,41 +91,59 @@ export async function refreshAllPrices(): Promise<{ success: number; failed: num
 
   console.log(`Starting price refresh for ${stocks.length} stocks`)
 
-  // Process in batches to avoid overwhelming Yahoo API
-  const batchSize = 10
+  // Check circuit breaker before starting
+  const YahooProtection = (await import('./yahooProtection')).default
+  const protection = YahooProtection.getInstance()
+  
+  if (protection.isCircuitOpen()) {
+    console.log('⚡ Circuit breaker open - skipping price refresh')
+    return { success: 0, failed: stocks.length }
+  }
+
+  // Process in smaller batches to avoid overwhelming Yahoo API
+  const batchSize = 5 // Reduced from 10
   for (let i = 0; i < stocks.length; i += batchSize) {
     const batch = stocks.slice(i, i + batchSize)
 
-    await Promise.all(
-      batch.map(async (stock: any) => {
-        try {
-          const quote = await fetchQuote(stock.symbol)
-          if (quote) {
-            await (Price as any).findOneAndUpdate(
-              { symbol: stock.symbol },
-              {
-                symbol: stock.symbol,
-                price: quote.price,
-                change: quote.change || 0,
-                changePercent: quote.changePercent || 0,
-                updatedAt: new Date(),
-              },
-              { upsert: true, new: true }
-            )
-            success++
-          } else {
-            failed++
-          }
-        } catch (error) {
-          console.error(`Failed to refresh ${stock.symbol}:`, error)
+    // Process batch sequentially instead of parallel to respect rate limits
+    for (const stock of batch) {
+      try {
+        const quote = await fetchQuote(stock.symbol)
+        if (quote) {
+          await (Price as any).findOneAndUpdate(
+            { symbol: stock.symbol },
+            {
+              symbol: stock.symbol,
+              price: quote.price,
+              change: quote.change || 0,
+              changePercent: quote.changePercent || 0,
+              updatedAt: new Date(),
+            },
+            { upsert: true, new: true }
+          )
+          success++
+        } else {
           failed++
         }
-      })
-    )
+      } catch (error) {
+        console.error(`Failed to refresh ${stock.symbol}:`, error)
+        failed++
+      }
+      
+      // Check if circuit opened during batch
+      if (protection.isCircuitOpen()) {
+        console.log('⚡ Circuit opened during refresh - stopping')
+        failed += stocks.length - (i + batch.indexOf(stock) + 1)
+        break
+      }
+    }
 
-    // Small delay between batches to be respectful to Yahoo API
+    // Break outer loop if circuit opened
+    if (protection.isCircuitOpen()) break
+
+    // Longer delay between batches
     if (i + batchSize < stocks.length) {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 2000))
     }
   }
 

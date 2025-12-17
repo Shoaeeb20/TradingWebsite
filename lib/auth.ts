@@ -64,6 +64,7 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             name: user.name,
             balance: parseFloat(process.env.INITIAL_BALANCE || '100000'),
+            fnoBalance: parseFloat(process.env.INITIAL_BALANCE || '100000'),
             provider: 'google',
           })
         }

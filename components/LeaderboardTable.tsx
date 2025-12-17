@@ -6,8 +6,12 @@ interface User {
   name: string
   email: string
   balance: number
+  fnoBalance: number
   holdingsValue: number
-  totalValue: number
+  currentValue: number
+  totalInvested: number
+  netPnL: number
+  returnPercent: number
   rank: number
 }
 
@@ -113,15 +117,16 @@ export default function LeaderboardTable() {
               <tr className="border-b">
                 <th className="text-left py-3">Rank</th>
                 <th className="text-left py-3">Name</th>
-                <th className="text-right py-3">Cash</th>
-                <th className="text-right py-3">Holdings</th>
-                <th className="text-right py-3">Total Value</th>
+                <th className="text-right py-3">Return %</th>
+                <th className="text-right py-3">Net P&L</th>
+                <th className="text-right py-3">Portfolio</th>
+                <th className="text-right py-3">Invested</th>
               </tr>
             </thead>
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-500">
+                  <td colSpan={6} className="text-center py-8 text-gray-500">
                     {searchTerm ? `No traders found matching "${searchTerm}"` : 'No traders found'}
                   </td>
                 </tr>
@@ -135,11 +140,18 @@ export default function LeaderboardTable() {
                       <div className="font-semibold">{user.name}</div>
                       <div className="text-sm text-gray-500">{user.email}</div>
                     </td>
-                    <td className="text-right">₹{user.balance.toLocaleString('en-IN')}</td>
-                    <td className="text-right">₹{user.holdingsValue.toLocaleString('en-IN')}</td>
-                    <td className="text-right font-bold text-primary">
-                      ₹{user.totalValue.toLocaleString('en-IN')}
+                    <td className={`text-right font-bold ${
+                      user.returnPercent >= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {user.returnPercent >= 0 ? '+' : ''}{user.returnPercent.toFixed(2)}%
                     </td>
+                    <td className={`text-right ${
+                      user.netPnL >= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {user.netPnL >= 0 ? '+' : ''}₹{user.netPnL.toLocaleString('en-IN')}
+                    </td>
+                    <td className="text-right">₹{user.currentValue.toLocaleString('en-IN')}</td>
+                    <td className="text-right text-gray-600">₹{user.totalInvested.toLocaleString('en-IN')}</td>
                   </tr>
                 ))
               )}

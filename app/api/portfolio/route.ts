@@ -23,6 +23,7 @@ export async function GET() {
 
     return NextResponse.json({
       balance: user.balance || 0,
+      fnoBalance: user.fnoBalance || 0,
       holdings: holdings.map((h) => ({
         symbol: h.symbol,
         quantity: h.quantity,

@@ -1,13 +1,10 @@
-import Link from 'next/link'
-import { Metadata } from 'next'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Practice Intraday and Delivery Trading Risk-Free | PaperTrade India',
-  description: 'Master intraday and delivery trading with our virtual stock trading simulator. Practice short selling, auto square-off, and portfolio management with ₹1 lakh virtual money.',
-  keywords: 'intraday trading, delivery trading, practice trading India, virtual stock trading, short selling, learn stock market'
-}
+import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 
 export default function SimulatorInfoPage() {
+  const { data: session } = useSession()
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -20,10 +17,10 @@ export default function SimulatorInfoPage() {
             Master both intraday and delivery trading strategies with our advanced virtual stock trading simulator. Experience real market conditions without risking your capital.
           </p>
           <Link 
-            href="/auth/signup"
+            href={session ? "/market" : "/auth/signin"}
             className="inline-block bg-green-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-green-700 transition-colors"
           >
-            Start Practicing Today!
+            {session ? "Go to Market" : "Start Practicing Today!"}
           </Link>
         </div>
 
@@ -161,10 +158,10 @@ export default function SimulatorInfoPage() {
             Start practicing intraday and delivery trading with India's most realistic simulator
           </p>
           <Link 
-            href="/auth/signup"
+            href={session ? "/market" : "/auth/signin"}
             className="inline-block bg-white text-green-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors mr-4"
           >
-            Create Free Account
+            {session ? "Go to Market" : "Create Free Account"}
           </Link>
           <Link 
             href="/dashboard"
