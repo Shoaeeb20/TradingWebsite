@@ -34,7 +34,7 @@ export default async function Market({ searchParams }: { searchParams: { q?: str
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold">Market</h1>
           <p className="text-gray-600 mt-1">
