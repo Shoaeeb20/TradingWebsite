@@ -89,13 +89,18 @@ export async function executeFnoTrade(trade: FnoTrade): Promise<{
         // Position closed
         await FnoPositionModel.deleteOne({ _id: existingPosition._id })
 
-        // Calculate P&L and credit on close
-        const pnl =
-          (optionPrice - existingPosition.avgPrice) *
-          Math.abs(currentQty) *
-          (currentQty > 0 ? 1 : -1)
+        // // Calculate P&L and credit on close
+        // const pnl =
+        //   (optionPrice - existingPosition.avgPrice) *
+        //   Math.abs(currentQty) *
+        //   (currentQty > 0 ? 1 : -1)
+        // await (User as any).findByIdAndUpdate(actualUserId, {
+        //   $inc: { fnoBalance: tradeValue + pnl },
+        // })
+        const exitValue = optionPrice * Math.abs(currentQty)
+
         await (User as any).findByIdAndUpdate(actualUserId, {
-          $inc: { fnoBalance: tradeValue + pnl },
+          $inc: { fnoBalance: exitValue },
         })
 
         return { success: true, message: 'Position closed successfully' }
