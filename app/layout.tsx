@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 import Providers from '@/components/Providers'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 
@@ -82,6 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <Navbar />
           <main className="min-h-screen bg-gray-50">{children}</main>
+          <Footer />
         </Providers>
       </body>
     </html>
