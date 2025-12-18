@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import { DisplayAd } from '@/components/ads'
+import { getAdSlot } from '@/lib/adsense'
 
 export default async function Home() {
   const session = await getServerSession(authOptions)
@@ -35,8 +37,13 @@ export default async function Home() {
           <p className="text-sm text-gray-500 mt-4">No credit card required • Takes 30 seconds</p>
         </div>
 
+        {/* Ad Placement - After Hero */}
+        <div className="mt-16">
+          <DisplayAd slot={getAdSlot('homepageHeader')} className="max-w-4xl mx-auto" />
+        </div>
+
         {/* Features Grid */}
-        <div className="mt-24 grid md:grid-cols-3 gap-8">
+        <div className="mt-16 grid md:grid-cols-3 gap-8">
           <div className="card text-center hover:scale-105 animate-fadeIn">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-3xl mb-4 mx-auto shadow-lg">
               📊
@@ -140,8 +147,13 @@ export default async function Home() {
           </div>
         </div>
 
+        {/* Ad Placement - Before CTA */}
+        <div className="mt-24">
+          <DisplayAd slot={getAdSlot('homepageFooter')} className="max-w-4xl mx-auto" />
+        </div>
+
         {/* CTA Section */}
-        <div className="mt-32 text-center">
+        <div className="mt-16 text-center">
           <h2 className="text-4xl font-bold mb-6">Ready to Start Your Trading Journey?</h2>
           <p className="text-xl text-gray-600 mb-8">Join thousands of traders learning risk-free</p>
           <Link href="/auth/signin" className="btn btn-primary text-lg px-12 py-4 inline-block">

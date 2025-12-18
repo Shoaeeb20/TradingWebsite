@@ -2,6 +2,11 @@ import { FnoTrade, FnoPosition, FnoContract } from './fnoTypes'
 import { calculateOptionPrice, getSettlementPrice, isExpired } from './fnoPricing'
 import { getSpotPrices } from './fnoCache'
 import { isMarketOpen } from './marketHours'
+import { 
+  calculateFnoClosingPnL, 
+  calculateFnoAveragePrice, 
+  validateFnoBalance 
+} from './fnoPnlCalculator'
 import FnoPositionModel from '../../models/FnoPosition'
 import User from '../../models/User'
 import { getServerSession } from 'next-auth'
@@ -59,13 +64,15 @@ export async function executeFnoTrade(trade: FnoTrade): Promise<{
     // Use actual MongoDB _id for database operations
     const actualUserId = user._id.toString()
 
-    // Calculate trade value
+    // Calculate trade value and validate balance
     const tradeValue = optionPrice * trade.quantity
     const isBuy = trade.action === 'BUY'
+    const isShort = !isBuy
 
-    // Check F&O balance for buy orders
-    if (isBuy && user.fnoBalance < tradeValue) {
-      return { success: false, message: 'Insufficient F&O balance' }
+    // Validate balance for both BUY and SELL orders
+    const balanceValidation = validateFnoBalance(user.fnoBalance, optionPrice, trade.quantity, isShort)
+    if (!balanceValidation.valid) {
+      return { success: false, message: balanceValidation.error! }
     }
 
     // Find existing position
@@ -86,30 +93,51 @@ export async function executeFnoTrade(trade: FnoTrade): Promise<{
       const newQty = isBuy ? currentQty + trade.quantity : currentQty - trade.quantity
 
       if (newQty === 0) {
-        // Position closed
-        await FnoPositionModel.deleteOne({ _id: existingPosition._id })
-
-        // // Calculate P&L and credit on close
-        // const pnl =
-        //   (optionPrice - existingPosition.avgPrice) *
-        //   Math.abs(currentQty) *
-        //   (currentQty > 0 ? 1 : -1)
-        // await (User as any).findByIdAndUpdate(actualUserId, {
-        //   $inc: { fnoBalance: tradeValue + pnl },
-        // })
-        const exitValue = optionPrice * Math.abs(currentQty)
+        // Position fully closed - calculate and credit P&L only
+        const pnlResult = calculateFnoClosingPnL(
+          existingPosition.avgPrice,
+          optionPrice,
+          currentQty
+        )
 
         await (User as any).findByIdAndUpdate(actualUserId, {
-          $inc: { fnoBalance: exitValue },
+          $inc: { fnoBalance: pnlResult.balanceChange },
         })
 
-        return { success: true, message: 'Position closed successfully' }
+        await FnoPositionModel.deleteOne({ _id: existingPosition._id })
+
+        return { 
+          success: true, 
+          message: `Position closed successfully. P&L: ₹${pnlResult.pnl.toFixed(2)}` 
+        }
+      } else if (Math.sign(currentQty) !== Math.sign(newQty)) {
+        // Position reversed (e.g., long 10 -> sell 15 = short 5)
+        // Close existing position first, then open new opposite position
+        const closePnl = calculateFnoClosingPnL(
+          existingPosition.avgPrice,
+          optionPrice,
+          currentQty
+        )
+
+        // Update balance with closing P&L
+        await (User as any).findByIdAndUpdate(actualUserId, {
+          $inc: { fnoBalance: closePnl.balanceChange },
+        })
+
+        // Create new opposite position
+        existingPosition.quantity = newQty
+        existingPosition.avgPrice = optionPrice
+        await existingPosition.save()
+
+        finalPosition = existingPosition.toObject()
       } else {
-        // Update position
-        const totalValue =
-          existingPosition.avgPrice * Math.abs(currentQty) +
-          optionPrice * trade.quantity * (isBuy ? 1 : -1)
-        const newAvgPrice = Math.abs(totalValue / newQty)
+        // Adding to existing position (same direction)
+        const newAvgPrice = calculateFnoAveragePrice(
+          existingPosition.avgPrice,
+          currentQty,
+          optionPrice,
+          isBuy ? trade.quantity : -trade.quantity
+        )
 
         existingPosition.quantity = newQty
         existingPosition.avgPrice = newAvgPrice
@@ -132,10 +160,17 @@ export async function executeFnoTrade(trade: FnoTrade): Promise<{
       finalPosition = newPosition.toObject()
     }
 
-    // Update F&O balance - only debit on buy, credit on sell handled in close logic
+    // Update F&O balance based on trade type
     if (isBuy) {
+      // Long position: debit full premium
       await (User as any).findByIdAndUpdate(actualUserId, {
         $inc: { fnoBalance: -tradeValue },
+      })
+    } else {
+      // Short position: credit premium received, debit margin
+      const marginRequired = balanceValidation.required
+      await (User as any).findByIdAndUpdate(actualUserId, {
+        $inc: { fnoBalance: tradeValue - marginRequired },
       })
     }
 
@@ -192,23 +227,31 @@ export async function getUserFnoPositions(): Promise<FnoPosition[]> {
 
       // Check if expired
       if (isExpired(contract.expiry)) {
-        // Mark as expired and calculate settlement
+        // Mark as expired and calculate settlement using shared calculator
         const settlementPrice = getSettlementPrice(contract, spotPrice)
-        const pnl = (settlementPrice - position.avgPrice) * position.quantity
+        const pnlResult = calculateFnoClosingPnL(
+          position.avgPrice,
+          settlementPrice,
+          position.quantity
+        )
 
         expiredPositions.push({
           positionId: position._id,
-          pnl,
+          pnl: pnlResult.balanceChange,
         })
       } else {
-        // Active position - calculate current P&L
+        // Active position - calculate current P&L using shared calculator
         const currentPrice = calculateOptionPrice(contract, spotPrice)
-        const pnl = (currentPrice - position.avgPrice) * position.quantity
+        const pnlResult = calculateFnoClosingPnL(
+          position.avgPrice,
+          currentPrice,
+          position.quantity
+        )
 
         activePositions.push({
           ...position,
           currentPrice,
-          pnl,
+          pnl: pnlResult.pnl,
         } as FnoPosition)
       }
     }
@@ -282,18 +325,25 @@ export async function closeFnoPosition(
     // Calculate current option price
     const currentPrice = calculateOptionPrice(position.contract, spotPrice)
 
-    // Calculate P&L
-    const pnl = (currentPrice - position.avgPrice) * position.quantity
+    // Calculate P&L using shared calculator
+    const pnlResult = calculateFnoClosingPnL(
+      position.avgPrice,
+      currentPrice,
+      position.quantity
+    )
 
-    // Update user F&O balance with P&L
+    // Update user F&O balance with P&L only (not original investment)
     await (User as any).findByIdAndUpdate(actualUserId, {
-      $inc: { fnoBalance: pnl + position.avgPrice * Math.abs(position.quantity) },
+      $inc: { fnoBalance: pnlResult.balanceChange },
     })
 
     // Delete the position
     await FnoPositionModel.deleteOne({ _id: positionId })
 
-    return { success: true, message: 'Position closed successfully' }
+    return { 
+      success: true, 
+      message: `Position closed successfully. P&L: ₹${pnlResult.pnl.toFixed(2)}` 
+    }
   } catch (error) {
     console.error('Failed to close F&O position:', error)
     return { success: false, message: 'Failed to close position' }

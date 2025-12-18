@@ -5,6 +5,7 @@ import User from '@/models/User'
 import Order from '@/models/Order'
 import Trade from '@/models/Trade'
 import { fetchQuote } from '@/lib/yahoo'
+import { calculateClosingPnL } from '@/lib/pnlCalculator'
 import mongoose from 'mongoose'
 
 export async function GET(req: Request) {
@@ -77,11 +78,8 @@ export async function GET(req: Request) {
 
         const user = await (User as any).findById(holding.userId).session(session)
         if (user) {
-          if (isShort) {
-            user.balance -= totalAmount
-          } else {
-            user.balance += totalAmount
-          }
+          const pnlResult = calculateClosingPnL(isShort, holding.avgPrice, currentPrice, absQuantity)
+          user.balance += pnlResult.balanceChange
           await user.save({ session })
         }
 

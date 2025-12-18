@@ -56,28 +56,24 @@ async function validateOrder(
     const holding = await (Holding as any).findOne({ userId, symbol, productType })
     const isCoveringShort = holding && holding.quantity < 0
 
-    if (!isCoveringShort) {
-      // Only check balance if NOT covering a short position
-      let estimatedCost: number
-      if (orderType === 'MARKET') {
-        // OLD CODE (Direct Yahoo API) - REMOVE AFTER TESTING
-        // const quote = await fetchQuote(symbol)
-        // if (!quote) {
-        //   return { valid: false, error: 'Unable to fetch current price' }
-        // }
-        // estimatedCost = quote.price * quantity
-
-        // NEW CODE (Cached Prices)
-        const cachedPrice = await getCachedPrice(symbol)
-        if (!cachedPrice) {
-          return { valid: false, error: 'Unable to fetch current price' }
-        }
-        estimatedCost = cachedPrice * quantity
-      } else {
-        estimatedCost = price! * quantity
+    // Calculate estimated cost for balance validation
+    let estimatedCost: number
+    if (orderType === 'MARKET') {
+      // NEW CODE (Cached Prices)
+      const cachedPrice = await getCachedPrice(symbol)
+      if (!cachedPrice) {
+        return { valid: false, error: 'Unable to fetch current price' }
       }
+      estimatedCost = cachedPrice * quantity
+    } else {
+      estimatedCost = price! * quantity
+    }
 
-      if (user.balance < estimatedCost) {
+    // Always check balance - both for new positions and short covering
+    if (user.balance < estimatedCost) {
+      if (isCoveringShort) {
+        return { valid: false, error: 'Insufficient balance to cover short position' }
+      } else {
         return { valid: false, error: 'Insufficient balance' }
       }
     }
@@ -178,85 +174,90 @@ async function fillMarketOrder(
   session: mongoose.ClientSession
 ): Promise<OrderResult> {
   const order = await (Order as any).findById(orderId).session(session)
-  if (!order || order.status !== 'PENDING') {
-    return { success: false, message: 'Order not found or not pending' }
+  if (!order) {
+    return { success: false, message: 'Order not found' }
   }
 
-  const fillPrice = await getCachedPrice(order.symbol)
-  if (!fillPrice) {
+  // OLD CODE (Direct Yahoo API) - REMOVE AFTER TESTING
+  // const quote = await fetchQuote(order.symbol)
+  // if (!quote) {
+  //   return { success: false, message: 'Unable to fetch market price' }
+  // }
+  // const fillPrice = quote.price
+
+  // NEW CODE (Cached Prices)
+  const cachedPrice = await getCachedPrice(order.symbol)
+  if (!cachedPrice) {
     return { success: false, message: 'Unable to fetch market price' }
   }
-
-  const totalValue = fillPrice * order.quantity
+  const fillPrice = cachedPrice
+  const totalCost = fillPrice * order.quantity
 
   const user = await (User as any).findById(order.userId).session(session)
   if (!user) {
     return { success: false, message: 'User not found' }
   }
 
-  let holding = await (Holding as any)
-    .findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType })
-    .session(session)
-
-  /* =========================
-     BUY ORDER
-  ========================= */
   if (order.type === 'BUY') {
-    // Case 1: Covering short
-    if (holding && holding.quantity < 0) {
-      user.balance -= totalValue
-      await user.save({ session })
+    const holding = await (Holding as any)
+      .findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType })
+      .session(session)
+    const isCoveringShort = holding && holding.quantity < 0
 
-      holding.quantity += order.quantity
-
-      if (holding.quantity === 0) {
-        await (Holding as any).deleteOne({ _id: holding._id }).session(session)
-      } else {
-        await holding.save({ session })
-      }
-    }
-    // Case 2: Normal buy (new or add long)
-    else {
-      if (user.balance < totalValue) {
+    if (!isCoveringShort) {
+      // Regular BUY: Deduct full amount from balance
+      if (user.balance < totalCost) {
         return { success: false, message: 'Insufficient balance' }
       }
-
-      user.balance -= totalValue
+      user.balance -= totalCost
       await user.save({ session })
+    }
 
-      if (holding) {
-        const newQty = holding.quantity + order.quantity
-        holding.avgPrice =
-          (holding.avgPrice * holding.quantity + fillPrice * order.quantity) / newQty
-        holding.quantity = newQty
-        await holding.save({ session })
+    if (holding) {
+      if (holding.quantity < 0) {
+        // Covering short position: Pay full cost and settle P&L
+        user.balance -= totalCost
+        await user.save({ session })
+
+        holding.quantity += order.quantity
+        if (holding.quantity === 0) {
+          await (Holding as any).deleteOne({ _id: holding._id }).session(session)
+        } else {
+          await holding.save({ session })
+        }
       } else {
-        await (Holding as any).create(
-          [
-            {
-              userId: order.userId,
-              symbol: order.symbol,
-              quantity: order.quantity,
-              avgPrice: fillPrice,
-              productType: order.productType,
-            },
-          ],
-          { session }
-        )
+        // Adding to long position
+        const newQuantity = holding.quantity + order.quantity
+        const newAvgPrice =
+          (holding.avgPrice * holding.quantity + fillPrice * order.quantity) / newQuantity
+        holding.quantity = newQuantity
+        holding.avgPrice = newAvgPrice
+        await holding.save({ session })
       }
+    } else {
+      // New long position
+      await (Holding as any).create(
+        [
+          {
+            userId: order.userId,
+            symbol: order.symbol,
+            quantity: order.quantity,
+            avgPrice: fillPrice,
+            productType: order.productType,
+          },
+        ],
+        { session }
+      )
     }
   } else {
+    // SELL order
+    const holding = await (Holding as any)
+      .findOne({ userId: order.userId, symbol: order.symbol, productType: order.productType })
+      .session(session)
 
-  /* =========================
-     SELL ORDER
-  ========================= */
-    // Case 3: Selling long position
-    if (holding && holding.quantity > 0) {
-      if (holding.quantity < order.quantity) {
-        return { success: false, message: 'Insufficient holdings' }
-      }
-
-      user.balance += totalValue
+    if (holding) {
+      // Selling existing long position: Add proceeds to balance
+      user.balance += totalCost
       await user.save({ session })
 
       holding.quantity -= order.quantity
@@ -265,34 +266,31 @@ async function fillMarketOrder(
       } else {
         await holding.save({ session })
       }
-    }
-    // Case 4: Opening short (intraday only)
-    else {
-      if (order.productType !== 'INTRADAY') {
-        return { success: false, message: 'Short selling not allowed for delivery' }
+    } else {
+      // No position - creating short position (intraday only)
+      if (order.productType === 'INTRADAY') {
+        // Short sell: Credit proceeds to balance and create negative holding
+        user.balance += totalCost
+        await user.save({ session })
+
+        await (Holding as any).create(
+          [
+            {
+              userId: order.userId,
+              symbol: order.symbol,
+              quantity: -order.quantity,
+              avgPrice: fillPrice,
+              productType: order.productType,
+            },
+          ],
+          { session }
+        )
+      } else {
+        return { success: false, message: 'Insufficient delivery holdings' }
       }
-
-      user.balance += totalValue
-      await user.save({ session })
-
-      await (Holding as any).create(
-        [
-          {
-            userId: order.userId,
-            symbol: order.symbol,
-            quantity: -order.quantity,
-            avgPrice: fillPrice,
-            productType: order.productType,
-          },
-        ],
-        { session }
-      )
     }
   }
 
-  /* =========================
-     RECORD TRADE
-  ========================= */
   await (Trade as any).create(
     [
       {
@@ -302,7 +300,7 @@ async function fillMarketOrder(
         type: order.type,
         quantity: order.quantity,
         price: fillPrice,
-        total: totalValue,
+        total: totalCost,
       },
     ],
     { session }
