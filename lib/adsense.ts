@@ -42,12 +42,21 @@ export const ADSENSE_CONFIG = {
     minTimeBetweenAds: 30000, // 30 seconds
     
     // Maximum ads per page
-    maxAdsPerPage: 3,
+    maxAdsPerPage: 2, // Reduced from 3 to avoid overwhelming content
+    
+    // Minimum content length before showing ads
+    minContentLength: 500,
     
     // Pages where ads should not be shown
     excludePages: [
       '/admin',
       '/api',
+      '/auth',
+      '/signin',
+      '/signup',
+      '/dashboard', // Don't show ads on user dashboard
+      '/portfolio', // Don't show ads on portfolio page
+      '/simulator', // Don't show ads on trading simulator
     ],
   },
 }
@@ -55,14 +64,27 @@ export const ADSENSE_CONFIG = {
 /**
  * Check if ads should be shown on current page
  */
-export function shouldShowAds(pathname: string): boolean {
+export function shouldShowAds(pathname: string, contentLength?: number): boolean {
   // Don't show ads on excluded pages
   if (ADSENSE_CONFIG.placements.excludePages.some(page => pathname.startsWith(page))) {
     return false
   }
   
-  // Add more logic here (e.g., user subscription status)
-  return true
+  // Don't show ads on pages with insufficient content
+  if (contentLength && contentLength < 300) {
+    return false
+  }
+  
+  // Don't show ads on authentication pages
+  if (pathname.includes('/auth/') || pathname.includes('/signin') || pathname.includes('/signup')) {
+    return false
+  }
+  
+  // Only show ads on content-rich pages
+  const allowedPages = ['/', '/blog', '/help', '/about', '/market', '/leaderboard']
+  const isAllowedPage = allowedPages.some(page => pathname === page || pathname.startsWith(page + '/'))
+  
+  return isAllowedPage
 }
 
 /**

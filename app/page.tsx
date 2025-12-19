@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import { DisplayAd } from '@/components/ads'
+import ContentAwareAd from '@/components/ads/ContentAwareAd'
 import { getAdSlot } from '@/lib/adsense'
 
 export default async function Home() {
@@ -37,9 +37,13 @@ export default async function Home() {
           <p className="text-sm text-gray-500 mt-4">No credit card required • Takes 30 seconds</p>
         </div>
 
-        {/* Ad Placement - After Hero */}
+        {/* Ad Placement - After Hero (Only on content-rich pages) */}
         <div className="mt-16">
-          <DisplayAd slot={getAdSlot('homepageHeader')} className="max-w-4xl mx-auto" />
+          <ContentAwareAd 
+            adSlot={getAdSlot('homepageHeader')} 
+            className="max-w-4xl mx-auto"
+            minContentLength={1000}
+          />
         </div>
 
         {/* Features Grid */}
@@ -147,9 +151,13 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* Ad Placement - Before CTA */}
+        {/* Ad Placement - Before CTA (Only after substantial content) */}
         <div className="mt-24">
-          <DisplayAd slot={getAdSlot('homepageFooter')} className="max-w-4xl mx-auto" />
+          <ContentAwareAd 
+            adSlot={getAdSlot('homepageFooter')} 
+            className="max-w-4xl mx-auto"
+            minContentLength={1500}
+          />
         </div>
 
         {/* CTA Section */}

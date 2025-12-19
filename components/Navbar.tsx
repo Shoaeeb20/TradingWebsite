@@ -30,6 +30,9 @@ export default function Navbar() {
             <Link href="/simulator" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
               Simulator
             </Link>
+            <Link href="/community" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+              Community
+            </Link>
             <Link href="/leaderboard-info" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
               Performance
             </Link>
@@ -47,9 +50,7 @@ export default function Navbar() {
                 <Link href="/portfolio" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
                   Portfolio
                 </Link>
-                <Link href="/leaderboard" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                  Leaderboard
-                </Link>
+               
               </>
             )}
           </div>
@@ -113,6 +114,13 @@ export default function Navbar() {
                 Simulator
               </Link>
               <Link 
+                href="/community" 
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-2 py-1"
+                onClick={() => setIsOpen(false)}
+              >
+                Community
+              </Link>
+              <Link 
                 href="/leaderboard-info" 
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-2 py-1"
                 onClick={() => setIsOpen(false)}
@@ -149,13 +157,7 @@ export default function Navbar() {
                   >
                     Portfolio
                   </Link>
-                  <Link 
-                    href="/leaderboard" 
-                    className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-2 py-1"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Leaderboard
-                  </Link>
+                  
                 </>
               )}
               

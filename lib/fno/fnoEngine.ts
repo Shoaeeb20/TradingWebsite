@@ -5,7 +5,8 @@ import { isMarketOpen } from './marketHours'
 import { 
   calculateFnoClosingPnL, 
   calculateFnoAveragePrice, 
-  validateFnoBalance 
+  validateFnoBalance,
+  calculateFnoMargin
 } from './fnoPnlCalculator'
 import FnoPositionModel from '../../models/FnoPosition'
 import User from '../../models/User'
@@ -93,11 +94,12 @@ export async function executeFnoTrade(trade: FnoTrade): Promise<{
       const newQty = isBuy ? currentQty + trade.quantity : currentQty - trade.quantity
 
       if (newQty === 0) {
-        // Position fully closed - calculate and credit P&L only
+        // Position fully closed - calculate and credit P&L + margin release
         const pnlResult = calculateFnoClosingPnL(
           existingPosition.avgPrice,
           optionPrice,
-          currentQty
+          currentQty,
+          true // isClosing = true
         )
 
         await (User as any).findByIdAndUpdate(actualUserId, {
@@ -116,7 +118,8 @@ export async function executeFnoTrade(trade: FnoTrade): Promise<{
         const closePnl = calculateFnoClosingPnL(
           existingPosition.avgPrice,
           optionPrice,
-          currentQty
+          currentQty,
+          true // isClosing = true
         )
 
         // Update balance with closing P&L
@@ -160,18 +163,37 @@ export async function executeFnoTrade(trade: FnoTrade): Promise<{
       finalPosition = newPosition.toObject()
     }
 
-    // Update F&O balance based on trade type
-    if (isBuy) {
-      // Long position: debit full premium
-      await (User as any).findByIdAndUpdate(actualUserId, {
-        $inc: { fnoBalance: -tradeValue },
-      })
-    } else {
-      // Short position: credit premium received, debit margin
-      const marginRequired = balanceValidation.required
-      await (User as any).findByIdAndUpdate(actualUserId, {
-        $inc: { fnoBalance: tradeValue - marginRequired },
-      })
+    // Update F&O balance based on trade type (only for new positions or additions)
+    // Skip if position was closed or reversed (already handled above)
+    if (!existingPosition || (existingPosition && Math.sign(existingPosition.quantity) === Math.sign(finalPosition.quantity))) {
+      if (isBuy) {
+        // Long position: debit full premium
+        await (User as any).findByIdAndUpdate(actualUserId, {
+          $inc: { fnoBalance: -tradeValue },
+        })
+      } else {
+        // Short position: debit margin only
+        const marginRequired = balanceValidation.required
+        await (User as any).findByIdAndUpdate(actualUserId, {
+          $inc: { fnoBalance: -marginRequired },
+        })
+      }
+    } else if (existingPosition && Math.sign(existingPosition.quantity) !== Math.sign(finalPosition.quantity)) {
+      // Position reversal: handle new position balance
+      const newPositionIsShort = finalPosition.quantity < 0
+      if (newPositionIsShort) {
+        // New short position: debit margin
+        const newMarginRequired = calculateFnoMargin(optionPrice, Math.abs(finalPosition.quantity), true)
+        await (User as any).findByIdAndUpdate(actualUserId, {
+          $inc: { fnoBalance: -newMarginRequired },
+        })
+      } else {
+        // New long position: debit premium
+        const newPremiumRequired = optionPrice * Math.abs(finalPosition.quantity)
+        await (User as any).findByIdAndUpdate(actualUserId, {
+          $inc: { fnoBalance: -newPremiumRequired },
+        })
+      }
     }
 
     return {
@@ -232,7 +254,8 @@ export async function getUserFnoPositions(): Promise<FnoPosition[]> {
         const pnlResult = calculateFnoClosingPnL(
           position.avgPrice,
           settlementPrice,
-          position.quantity
+          position.quantity,
+          true // isClosing = true (expiry settlement)
         )
 
         expiredPositions.push({
@@ -245,7 +268,8 @@ export async function getUserFnoPositions(): Promise<FnoPosition[]> {
         const pnlResult = calculateFnoClosingPnL(
           position.avgPrice,
           currentPrice,
-          position.quantity
+          position.quantity,
+          false // isClosing = false (just for display, don't release margin)
         )
 
         activePositions.push({
@@ -329,7 +353,8 @@ export async function closeFnoPosition(
     const pnlResult = calculateFnoClosingPnL(
       position.avgPrice,
       currentPrice,
-      position.quantity
+      position.quantity,
+      true // isClosing = true
     )
 
     // Update user F&O balance with P&L only (not original investment)

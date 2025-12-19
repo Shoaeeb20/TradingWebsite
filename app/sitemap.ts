@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
-      url: 'https://papertrade-india.vercel.app/leaderboard',
+      url: 'https://papertrade-india.vercel.app/community',
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,

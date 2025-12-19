@@ -8,6 +8,7 @@ interface User {
   balance: number
   fnoBalance: number
   holdingsValue: number
+  fnoUnrealizedPnL: number
   currentValue: number
   totalInvested: number
   netPnL: number

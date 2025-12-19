@@ -15,22 +15,55 @@ export interface FnoPnL {
  * @param avgPrice - Average entry price of the position
  * @param currentPrice - Current market price
  * @param quantity - Position quantity (positive for long, negative for short)
+ * @param isClosing - Whether this is a position closing (affects margin release)
  * @returns P&L details
  */
 export function calculateFnoClosingPnL(
   avgPrice: number,
   currentPrice: number,
-  quantity: number
+  quantity: number,
+  isClosing: boolean = true
 ): FnoPnL {
-  // P&L = (current price - avg price) * quantity
-  // Positive quantity (long): profit when price rises
-  // Negative quantity (short): profit when price falls
-  const pnl = (currentPrice - avgPrice) * quantity
+  const isShort = quantity < 0
+  const absQuantity = Math.abs(quantity)
   
-  return {
-    pnl,
-    balanceChange: pnl, // Only P&L affects balance in options
-    isProfit: pnl > 0,
+  if (isClosing) {
+    if (isShort) {
+      // Short position closing: Get back margin + P&L
+      // P&L = (entry price - current price) * abs(quantity) [profit when price falls]
+      const pnl = (avgPrice - currentPrice) * absQuantity
+      
+      // Release the margin that was blocked + P&L
+      const marginBlocked = calculateFnoMargin(avgPrice, absQuantity, true)
+      
+      return {
+        pnl,
+        balanceChange: marginBlocked + pnl, // Margin release + P&L
+        isProfit: pnl > 0,
+      }
+    } else {
+      // Long position closing: Get current value (original investment + P&L)
+      // This is like selling the option at current market price
+      const currentValue = currentPrice * absQuantity
+      const pnl = (currentPrice - avgPrice) * absQuantity
+      
+      return {
+        pnl,
+        balanceChange: currentValue, // Get back current market value
+        isProfit: pnl > 0,
+      }
+    }
+  } else {
+    // Non-closing calculation (just for display)
+    const pnl = isShort 
+      ? (avgPrice - currentPrice) * absQuantity
+      : (currentPrice - avgPrice) * absQuantity
+    
+    return {
+      pnl,
+      balanceChange: pnl, // Just P&L for display
+      isProfit: pnl > 0,
+    }
   }
 }
 
@@ -73,12 +106,17 @@ export function calculateFnoMargin(
     // Long positions: pay full premium
     return price * quantity
   } else {
-    // Short positions: margin requirement (20% of premium + minimum)
+    // Short positions: margin requirement for option selling
+    // Use a more realistic margin calculation
     const premiumValue = price * quantity
-    const marginPercent = 0.2 // 20% margin
-    const minimumMargin = 1000 // Minimum ₹1000 margin per lot
     
-    return Math.max(premiumValue * marginPercent, minimumMargin)
+    // For option selling, margin is typically higher
+    // Base margin: 10% of strike price + premium value
+    // Simplified: Use 3x premium value or minimum ₹5000 per lot
+    const baseMargin = premiumValue * 3
+    const minimumMargin = 5000 * quantity // ₹5000 per lot minimum
+    
+    return Math.max(baseMargin, minimumMargin)
   }
 }
 
