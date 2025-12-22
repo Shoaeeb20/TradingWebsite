@@ -33,6 +33,9 @@ export default function Navbar() {
             <Link href="/community" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
               Community
             </Link>
+            <Link href="/trade-ideas" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+              Trade Ideas
+            </Link>
             <Link href="/leaderboard-info" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
               Performance
             </Link>
@@ -119,6 +122,13 @@ export default function Navbar() {
                 onClick={() => setIsOpen(false)}
               >
                 Community
+              </Link>
+              <Link 
+                href="/trade-ideas" 
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-2 py-1"
+                onClick={() => setIsOpen(false)}
+              >
+                Trade Ideas
               </Link>
               <Link 
                 href="/leaderboard-info" 

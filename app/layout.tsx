@@ -38,6 +38,9 @@ export const metadata: Metadata = {
   verification: {
     google: 'google0824e4c5c0ef59da',
   },
+  other: {
+    monetag: '617d92106a167769a10e5a2ad72d1b17',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_IN',
@@ -72,10 +75,35 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        <meta name="monetag" content="617d92106a167769a10e5a2ad72d1b17" />
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7953904112923612"
           crossOrigin="anonymous"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(s){s.dataset.zone='10359925',s.src='https://gizokraijaw.net/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))
+            `,
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                      console.log('PropellerAds SW registered successfully:', registration.scope);
+                    })
+                    .catch(function(error) {
+                      console.log('PropellerAds SW registration failed:', error);
+                    });
+                });
+              }
+            `,
+          }}
         />
       </head>
       <body className={inter.className}>
