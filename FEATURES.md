@@ -17,6 +17,16 @@
 - ✅ **Auto Square-Off** - Automatic closing of intraday positions at 3:20 PM IST
 - ✅ **Product Type Badges** - Visual indicators for INTRADAY vs DELIVERY
 
+### F&O Trading (Futures & Options)
+- ✅ **F&O Engine** - Complete futures and options trading system
+- ✅ **Margin System** - Proper margin requirements for F&O positions
+- ✅ **F&O P&L Calculator** - Accurate profit/loss calculations with margin handling
+- ✅ **Long/Short Positions** - Support for both BUY and SELL F&O orders
+- ✅ **F&O Square-Off** - Automatic closing of F&O positions at market close
+- ✅ **Investment Return Logic** - Proper return of invested amount + P&L
+- ✅ **F&O Holdings** - Separate tracking of F&O positions from equity
+- ✅ **Margin Validation** - Ensure sufficient balance for F&O trades
+
 ### Market Data
 - ✅ **100+ NSE Stocks** - Carefully curated list of top Indian stocks
 - ✅ **Real-Time Prices** - Delayed 15 minutes via Yahoo Finance API
@@ -26,18 +36,53 @@
 - ✅ **Market Hours Validation** - Trading only during NSE hours (9:15 AM - 3:30 PM IST)
 
 ### Portfolio Management
-- ✅ **Holdings Tracking** - Real-time view of all positions
+- ✅ **Holdings Tracking** - Real-time view of all positions (Equity + F&O)
 - ✅ **Average Price Calculation** - Weighted average for multiple buys
-- ✅ **P&L Calculation** - Realized and unrealized profit/loss
-- ✅ **Portfolio Value** - Total value including cash + holdings
+- ✅ **P&L Calculation** - Realized and unrealized profit/loss for both equity and F&O
+- ✅ **Portfolio Value** - Total value including cash + holdings + F&O positions
 - ✅ **Quick Exit** - One-click sell/cover buttons for each holding
-- ✅ **Separate Tracking** - Intraday and delivery positions tracked separately
+- ✅ **Separate Tracking** - Intraday, delivery, and F&O positions tracked separately
+- ✅ **Unified P&L** - Combined profit/loss view across all instruments
 
 ### Trade History
 - ✅ **Complete Trade Log** - All executed trades with timestamps
 - ✅ **Trade Details** - Symbol, type, quantity, price, total
 - ✅ **Recent Trades** - Dashboard widget showing last 10 trades
 - ✅ **Trade Filtering** - Filter by date, symbol, type
+
+---
+
+## 💰 Monetization Features
+
+### Google AdSense Integration
+- ✅ **AdSense Script** - Properly integrated in layout
+- ✅ **Content-Aware Ads** - Ads only show on content-rich pages
+- ✅ **Reusable Ad Components** - GoogleAd, InFeedAd, ContentAwareAd
+- ✅ **Policy Compliance** - Ads avoid trading/financial advice pages
+- ✅ **Required Pages** - Privacy Policy, Terms, About, Contact, Disclaimer, Help, Blog
+- ✅ **AdSense Optimization** - Proper ad placement and sizing
+
+### PropellerAds Integration
+- ✅ **Service Worker** - PropellerAds sw.js in root directory
+- ✅ **Vignette Ads** - Non-intrusive ad format
+- ✅ **MonetAG Integration** - Additional monetization layer
+- ✅ **Meta Tags** - Proper verification tags
+- ✅ **Script Integration** - Optimized ad loading
+
+### Subscription System
+- ✅ **Educational Market Studies** - Premium content subscription
+- ✅ **₹39/Month Pricing** - Affordable subscription model
+- ✅ **UPI Payment System** - QR code based payments
+- ✅ **Manual Verification** - WhatsApp screenshot verification
+- ✅ **Admin Panel** - Payment approval/rejection system
+- ✅ **Search Functionality** - Admin can search payments by UPI ID
+- ✅ **Auto-Cleanup** - Processed payments auto-removed
+- ✅ **30-Day Validity** - Subscription expires after 30 days
+- ✅ **Access Control** - Only active subscribers can view content
+- ✅ **Compliance-Focused** - SEBI-safe educational language
+- ✅ **Sample Previews** - 4 different types of market studies
+- ✅ **Beginner-Friendly** - Simple language explanations
+- ✅ **Legal Disclaimers** - Strong educational disclaimers throughout
 
 ---
 
@@ -72,9 +117,23 @@
 
 ### Leaderboard
 - ✅ **User Rankings** - Compete with other traders
-- ✅ **Total Portfolio Value** - Ranked by cash + holdings value
+- ✅ **Total Portfolio Value** - Ranked by cash + holdings value + F&O positions
 - ✅ **Holdings Breakdown** - See each user's holdings value
+- ✅ **F&O Integration** - Leaderboard includes F&O unrealized P&L
 - ✅ **Real-Time Updates** - Rankings update with market prices
+- ✅ **Fair Ranking System** - Comprehensive portfolio calculation
+
+### Community Features
+- ✅ **Community Statistics Page** - Comprehensive trader analytics
+- ✅ **Total Traders Count** - See total registered users
+- ✅ **Active/Inactive Traders** - Track user engagement
+- ✅ **New Traders Today** - Daily signup metrics
+- ✅ **Trading Activity Stats** - Total trades and volume
+- ✅ **Top Performer Display** - Showcase best trader
+- ✅ **Real-Time Data** - Live updates every 30 seconds
+- ✅ **Manual Refresh** - User-controlled data refresh
+- ✅ **Mobile Responsive** - Works perfectly on all devices
+- ✅ **Navigation Integration** - Linked in navbar and footer
 
 ### Loading States
 - ✅ **Page-Level Loaders** - Spinner while pages load
@@ -119,6 +178,10 @@
 - ✅ **Trade Model** - Executed trade records
 - ✅ **Holding Model** - Current positions with avg price
 - ✅ **Price Model** - Cached stock prices with expiry
+- ✅ **FnoPosition Model** - F&O positions with margin tracking
+- ✅ **Subscription Model** - User subscription status and expiry
+- ✅ **TradeIdea Model** - Educational market studies content
+- ✅ **PaymentSubmission Model** - UPI payment verification data
 
 ### Database Features
 - ✅ **MongoDB Atlas** - Cloud-hosted database
@@ -139,6 +202,16 @@
 - ✅ `GET /api/trades` - Trade history
 - ✅ `GET /api/orders` - Order history
 - ✅ `GET /api/cron/square-off` - Auto square-off endpoint
+- ✅ `GET /api/leaderboard` - User rankings with F&O integration
+- ✅ `GET /api/community-stats` - Community statistics
+- ✅ `POST /api/payment-submissions` - Submit payment details
+- ✅ `GET /api/admin/payment-submissions` - Admin payment management
+- ✅ `POST /api/admin/payment-submissions/[id]/approve` - Approve payment
+- ✅ `POST /api/admin/payment-submissions/[id]/reject` - Reject payment
+- ✅ `GET /api/subscription/status` - Check subscription status
+- ✅ `GET /api/trade-ideas` - Educational market studies
+- ✅ `POST /api/admin/trade-ideas` - Admin content management
+- ✅ `GET /api/cron/cleanup-trade-ideas` - Auto-cleanup old content
 
 ---
 
@@ -226,6 +299,20 @@
 - ✅ **Order Types** - Learn market vs limit
 - ✅ **Product Types** - Understand intraday vs delivery
 - ✅ **Short Selling** - Practice advanced strategies
+- ✅ **F&O Trading** - Learn futures and options
+- ✅ **Educational Market Studies** - Premium subscription content
+- ✅ **Beginner-Friendly Content** - Simple language explanations
+- ✅ **Compliance-Safe Learning** - SEBI-compliant educational approach
+
+### Premium Educational Content
+- ✅ **Market Studies Subscription** - ₹39/month educational content
+- ✅ **4 Study Types** - Positional, Intraday, Swing, Futures studies
+- ✅ **Simple Language** - "What is happening in simple words" format
+- ✅ **Learning Focus** - "What this means (for learning)" sections
+- ✅ **Risk Awareness** - "Important to understand" disclaimers
+- ✅ **Technical Education** - "Why this study is shared" explanations
+- ✅ **Sample Previews** - Free preview of subscription content
+- ✅ **Legal Compliance** - Strong educational disclaimers throughout
 
 ### Educational Games
 - ✅ **News Impact Simulator** - See how events affect stock prices
@@ -278,7 +365,9 @@
 
 ### Scheduled Tasks
 - ✅ **Auto Square-Off** - Close intraday at 3:20 PM
+- ✅ **F&O Square-Off** - Close F&O positions at market close
 - ✅ **Cron Endpoint** - `/api/cron/square-off`
+- ✅ **Content Cleanup** - Auto-delete old trade ideas after 7 days
 - ✅ **External Cron** - Works with cron-job.org
 - ✅ **Secure Endpoint** - CRON_SECRET authentication
 - ✅ **Error Handling** - Graceful failure handling
@@ -311,7 +400,7 @@
 ## 🎨 UI Components
 
 ### Reusable Components
-- ✅ **Navbar** - Responsive navigation with auth
+- ✅ **Navbar** - Responsive navigation with auth + community link
 - ✅ **StockCard** - Stock display with live price
 - ✅ **StockChart** - Professional trading chart
 - ✅ **TradeForm** - Order placement form
@@ -319,9 +408,14 @@
 - ✅ **PortfolioSummary** - Portfolio overview cards
 - ✅ **RecentTrades** - Trade history widget
 - ✅ **ActiveOrders** - Pending orders widget
-- ✅ **LeaderboardTable** - User rankings table
+- ✅ **LeaderboardTable** - User rankings table with F&O integration
 - ✅ **SearchBox** - Stock search component
 - ✅ **Loading** - Reusable loading spinner
+- ✅ **CommunityStats** - Real-time community statistics
+- ✅ **GoogleAd** - AdSense ad component
+- ✅ **InFeedAd** - In-feed advertisement component
+- ✅ **ContentAwareAd** - Context-aware ad placement
+- ✅ **Footer** - Enhanced footer with community link
 
 ### Styling
 - ✅ **Tailwind CSS** - Utility-first styling
@@ -455,6 +549,6 @@
 
 ---
 
-**Total Features: 200+**
+**Total Features: 250+**
 
-This is a comprehensive, production-ready application with enterprise-level features, ready to deploy and scale!
+This is a comprehensive, production-ready application with enterprise-level features, including advanced F&O trading, community features, monetization systems, and premium educational content - ready to deploy and scale!

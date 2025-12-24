@@ -6,10 +6,10 @@ import Stock from '@/models/Stock'
 import User from '@/models/User'
 import Order from '@/models/Order'
 import Trade from '@/models/Trade'
+import DataCleanupPanel from '@/components/admin/DataCleanupPanel'
+import { ADMIN_EMAILS } from '@/lib/adminConfig'
 
 export const dynamic = 'force-dynamic'
-
-const ADMIN_EMAILS = ['admin@example.com']
 
 export default async function Admin() {
   const session = await getServerSession(authOptions)
@@ -54,13 +54,17 @@ export default async function Admin() {
         </div>
       </div>
 
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">Actions</h2>
-        <div className="space-y-2">
-          <button className="btn btn-primary w-full">Sync Stocks from CSV</button>
-          <button className="btn btn-secondary w-full">Match Pending Limit Orders</button>
-          <button className="btn btn-secondary w-full">Clear Old Price Cache</button>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="card">
+          <h2 className="text-xl font-bold mb-4">Actions</h2>
+          <div className="space-y-2">
+            <button className="btn btn-primary w-full">Sync Stocks from CSV</button>
+            <button className="btn btn-secondary w-full">Match Pending Limit Orders</button>
+            <button className="btn btn-secondary w-full">Clear Old Price Cache</button>
+          </div>
         </div>
+
+        <DataCleanupPanel />
       </div>
     </div>
   )

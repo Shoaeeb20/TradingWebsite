@@ -5,11 +5,11 @@ import { connectDB } from '@/lib/db'
 import PaymentSubmission from '@/models/PaymentSubmission'
 import { activateSubscription } from '@/lib/subscription'
 import User from '@/models/User'
+import { isAdminEmail } from '@/lib/adminConfig'
 
 // Check if user is admin
 async function isAdmin(email: string): Promise<boolean> {
-  const adminEmails = ['admin@papertrade-india.com', 'oshoaeeb@gmail.com']
-  return adminEmails.includes(email)
+  return isAdminEmail(email)
 }
 
 export async function POST(

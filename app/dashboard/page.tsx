@@ -10,6 +10,7 @@ import PortfolioSummary from '@/components/PortfolioSummary'
 import RecentTrades from '@/components/RecentTrades'
 import ActiveOrders from '@/components/ActiveOrders'
 import GrowwReferral from '@/components/GrowwReferral'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,6 +35,25 @@ export default async function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Educational Market Studies Banner */}
+      <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">📚</div>
+            <div>
+              <h3 className="font-semibold text-blue-900">Enhance Your Trading Knowledge</h3>
+              <p className="text-sm text-blue-700">Access educational market studies and analysis for just ₹39/month</p>
+            </div>
+          </div>
+          <Link 
+            href="/trade-ideas/subscribe" 
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            Learn More →
+          </Link>
+        </div>
+      </div>
+
       <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 
       <PortfolioSummary

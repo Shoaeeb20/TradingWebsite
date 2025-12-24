@@ -7,6 +7,7 @@ import Holding from '@/models/Holding'
 import PortfolioTable from '@/components/PortfolioTable'
 import SquareOffButton from '@/components/SquareOffButton'
 import GrowwReferral from '@/components/GrowwReferral'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,6 +25,25 @@ export default async function Portfolio() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Educational Market Studies Banner */}
+      <div className="mb-6 bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">💼</div>
+            <div>
+              <h3 className="font-semibold text-purple-900">Optimize Your Portfolio</h3>
+              <p className="text-sm text-purple-700">Learn advanced portfolio management strategies - Educational content for ₹39/month</p>
+            </div>
+          </div>
+          <Link 
+            href="/trade-ideas/subscribe" 
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+          >
+            Learn More →
+          </Link>
+        </div>
+      </div>
+
       <h1 className="text-3xl font-bold mb-8">Portfolio</h1>
 
       <div className="card mb-6">

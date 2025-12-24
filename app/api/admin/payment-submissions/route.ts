@@ -4,12 +4,11 @@ import { authOptions } from '@/lib/auth'
 import { connectDB } from '@/lib/db'
 import PaymentSubmission from '@/models/PaymentSubmission'
 import User from '@/models/User'
+import { isAdminEmail } from '@/lib/adminConfig'
 
-// Check if user is admin (you can modify this logic based on your admin system)
+// Check if user is admin
 async function isAdmin(email: string): Promise<boolean> {
-  // For now, hardcode admin email. In production, you might have an admin role in User model
-  const adminEmails = ['admin@papertrade-india.com', 'oshoaeeb@gmail.com'] // Add your admin emails
-  return adminEmails.includes(email)
+  return isAdminEmail(email)
 }
 
 export async function GET(request: NextRequest) {

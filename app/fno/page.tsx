@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import OptionChain from '../../components/fno/OptionChain'
 import FnoTradeForm from '../../components/fno/FnoTradeForm'
 import FnoPositions from '../../components/fno/FnoPositions'
@@ -55,6 +56,25 @@ export default function FnoPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Educational Market Studies Banner */}
+        <div className="mb-6 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">🎯</div>
+              <div>
+                <h3 className="font-semibold text-orange-900">Master F&O Trading</h3>
+                <p className="text-sm text-orange-700">Learn advanced options strategies and futures trading - Educational content for ₹39/month</p>
+              </div>
+            </div>
+            <Link 
+              href="/trade-ideas/subscribe" 
+              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+            >
+              Subscribe →
+            </Link>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">F&O Trading</h1>

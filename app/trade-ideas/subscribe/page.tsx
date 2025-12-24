@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 
 interface SubscriptionStatus {
   isActive: boolean
@@ -26,6 +25,7 @@ export default function SubscribePage() {
     paymentDate: '',
     userUpiId: ''
   })
+  const [acknowledgeTerms, setAcknowledgeTerms] = useState(false)
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function SubscribePage() {
       
       if (data.success) {
         setSubscriptionStatus(data.data)
-        // If user has active subscription, redirect to trade ideas
+        // If user has active subscription, redirect to educational market studies
         if (data.data.isActive) {
           router.push('/trade-ideas')
         }
@@ -74,6 +74,11 @@ export default function SubscribePage() {
       return
     }
 
+    if (!acknowledgeTerms) {
+      setError('Please acknowledge that you understand this platform provides only educational content')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
 
@@ -95,6 +100,7 @@ export default function SubscribePage() {
           paymentDate: '',
           userUpiId: ''
         })
+        setAcknowledgeTerms(false)
       } else {
         setError(data.error || 'Failed to submit payment')
       }
@@ -155,7 +161,7 @@ export default function SubscribePage() {
             <h3 className="font-bold text-green-800 mb-3">Next Step: Send Screenshot</h3>
             <div className="space-y-3">
               <a
-                href="https://wa.me/919330255340?text=Hi%2C%20I%20have%20made%20payment%20for%20Trade%20Ideas%20subscription.%20Please%20find%20my%20payment%20screenshot."
+                href="https://wa.me/919330255340?text=Hi%2C%20I%20have%20made%20payment%20for%20Educational%20Market%20Studies%20subscription.%20Please%20find%20my%20payment%20screenshot."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium"
@@ -204,7 +210,7 @@ export default function SubscribePage() {
               <h3 className="text-sm font-medium text-red-800">⚠️ Legal Disclaimer</h3>
               <div className="mt-2 text-sm text-red-700">
                 <p>
-                  <strong>This platform is not SEBI registered.</strong> All trade ideas are strictly for paper trading and educational purposes only. 
+                  <strong>This platform is not SEBI registered.</strong> All educational market studies are strictly for paper trading and educational purposes only. 
                   No real-money trading or investment advice is provided.
                 </p>
               </div>
@@ -214,117 +220,188 @@ export default function SubscribePage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Subscribe to Trade Ideas</h1>
-          <p className="text-gray-600 mt-2">Get access to professional trading suggestions for paper trading</p>
+          <h1 className="text-3xl font-bold text-gray-900">Subscribe to Educational Market Studies</h1>
+          <p className="text-gray-600 mt-2">Access comprehensive market observations and educational content for paper trading practice</p>
           <div className="text-2xl font-bold text-blue-600 mt-4">₹39/month</div>
-          <p className="text-sm text-gray-500 mt-1">Less than ₹1.30 per day for premium trade ideas!</p>
+          <p className="text-sm text-gray-500 mt-1">Less than ₹1.30 per day for premium educational market analysis!</p>
         </div>
 
         {/* Value Proposition Section */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-8 mb-8">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">🎯 What You'll Get</h2>
-            <p className="text-gray-600">Professional trade ideas to enhance your paper trading skills</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">🎯 What You'll Access</h2>
+            <p className="text-gray-600">Professional market observations to enhance your paper trading education</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <div className="text-3xl mb-3">📈</div>
-              <h3 className="font-semibold text-gray-900 mb-2">Daily Trade Ideas</h3>
-              <p className="text-sm text-gray-600">Fresh trading opportunities posted regularly with detailed analysis</p>
+              <h3 className="font-semibold text-gray-900 mb-2">Daily Market Studies</h3>
+              <p className="text-sm text-gray-600">Fresh educational market observations posted regularly with detailed technical analysis</p>
             </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <div className="text-3xl mb-3">🎯</div>
-              <h3 className="font-semibold text-gray-900 mb-2">Entry & Exit Levels</h3>
-              <p className="text-sm text-gray-600">Clear entry points, targets, and stop-loss levels for risk management</p>
-            </div>
+           
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <div className="text-3xl mb-3">📊</div>
               <h3 className="font-semibent text-gray-900 mb-2">Technical Analysis</h3>
-              <p className="text-sm text-gray-600">Detailed rationale behind each trade suggestion with market insights</p>
+              <p className="text-sm text-gray-600">Detailed educational rationale behind each market observation with learning insights</p>
             </div>
           </div>
 
           {/* Sample Trade Ideas Preview */}
           <div className="bg-white rounded-lg p-6 border-2 border-blue-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">📋 Sample Trade Ideas (What Subscribers See)</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">📋 Sample Educational Market Studies (What Subscribers Access)</h3>
             
             <div className="space-y-4">
               {/* Sample Idea 1 */}
               <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-green-500">
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-semibold text-gray-900">RELIANCE - Positional Trade</h4>
+                  <h4 className="font-semibold text-gray-900">POSITIONAL MARKET STUDY – EDUCATIONAL (Paper Trading Only)</h4>
                   <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">EQUITY</span>
                 </div>
                 <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
-POSITIONAL TRADE
-RELIANCE looks strong above 2850
-SL: 2800
-TARGETS: 2900-2950-3000
-Hold for 5-7 days
+Instrument: RELIANCE
 
-Technical Analysis:
-✅ Breakout from consolidation zone
-✅ RSI showing bullish divergence  
-✅ Volume surge indicates institutional interest
-✅ Support at 200 EMA
+Purpose of this post: This is a simple market study shared only for learning and paper trading. It is not investment advice.
 
-Risk: Medium | Time: Short Term
+What is happening in simple words:
+The stock has been moving sideways for a while and now looks ready to break higher
+The price area around 2850 is acting like a strong support level
+More buyers seem to be coming in at lower prices
+
+What this means (for learning):
+If the stock stays strong above the 2850 area and overall market conditions remain good, we may see gradual upward movement over the next few weeks.
+
+Small upward price movements (for example, 50–150 points from current levels) are being observed only as learning reference, not as guaranteed outcomes.
+
+Why this study is shared:
+• Price breaking out → stock trying to move higher after long wait
+• RSI moving up → momentum may be improving
+• Good volume → more people are buying and selling
+• Support holding → the 2850 level is acting like a floor
+
+Important to understand:
+• Markets can move up or down at any time
+• This is not a prediction
+• This is only to help beginners understand how traders read charts
+
+Educational Disclaimer: This content does not constitute investment advice or a recommendation to buy or sell any security. This market observation is shared solely for learning, analysis, and paper trading practice. Users are responsible for their own financial decisions and should consult qualified financial advisors.
                 </pre>
               </div>
 
               {/* Sample Idea 2 */}
               <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-purple-500">
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-semibold text-gray-900">NIFTY Call Option - Intraday</h4>
+                  <h4 className="font-semibold text-gray-900">INTRADAY MARKET STUDY – EDUCATIONAL (Paper Trading Only)</h4>
                   <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">F&O</span>
                 </div>
                 <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
-INTRADAY F&O TRADE
-NIFTY 22000 CE looks good for quick gains
-Entry: Above 45
-Target: 55-65
-SL: 38
+Instrument: NIFTY 22000 CE
 
-Market Setup:
-🎯 Nifty holding above 21950 support
-🎯 Call writing reduced at 22000 strike
-🎯 Bullish momentum in banking stocks
-🎯 FII buying in index futures
+Purpose of this post: This is a simple options study shared only for learning and paper trading. It is not investment advice.
 
-Risk: High | Time: Intraday Only
+What is happening in simple words:
+The Nifty index is showing strength and moving higher
+The 22000 call option premium is around 45 and may move up
+Big institutions seem to be buying rather than selling
+
+What this means (for learning):
+If Nifty continues to stay strong and moves higher during the day, this call option premium may increase from current levels.
+
+Small premium increases (for example, from 45 to 55-65) are being observed only as learning reference, not as guaranteed outcomes.
+
+Why this study is shared:
+• Nifty staying strong → index showing upward momentum
+• Less call writing → big players not selling calls aggressively
+• Banking stocks up → important sector supporting the index
+• FII buying → foreign investors showing positive interest
+
+Important to understand:
+• Options can lose value very quickly
+• This is not a prediction
+• This is only to help beginners understand how options work
+
+Educational Disclaimer: This content does not constitute investment advice or a recommendation to buy or sell any security. This market observation is shared solely for learning, analysis, and paper trading practice. Users are responsible for their own financial decisions and should consult qualified financial advisors.
                 </pre>
               </div>
 
               {/* Sample Idea 3 */}
               <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-500">
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-semibold text-gray-900">TCS - Swing Trade</h4>
+                  <h4 className="font-semibold text-gray-900">SWING MARKET STUDY – EDUCATIONAL (Paper Trading Only)</h4>
                   <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">EQUITY</span>
                 </div>
                 <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
-SWING TRADE OPPORTUNITY
-TCS showing reversal signals near 3650
-Entry: 3680-3700
-Target: 3800-3850-3900
-SL: 3620
+Instrument: TCS
 
-Why TCS Now:
-💼 Q3 results expected to be strong
-💼 Dollar revenue growth momentum
-💼 Large deal pipeline robust
-💼 Valuation attractive vs peers
-💼 Technical bounce from support
+Purpose of this post: This is a simple swing trading study shared only for learning and paper trading. It is not investment advice.
 
-Risk: Low | Time: Medium Term (2-3 weeks)
+What is happening in simple words:
+TCS stock has come down and is now finding support around 3650-3680 levels
+The company's business seems to be doing well
+The stock looks like it might bounce back from these lower levels
+
+What this means (for learning):
+If TCS stays strong above the 3650 area and company results remain good, we may see gradual upward movement over the next few weeks.
+
+Small upward price movements (for example, 100–250 points from current levels) are being observed only as learning reference, not as guaranteed outcomes.
+
+Why this study is shared:
+• Support holding → the 3650 level is acting like a floor
+• Good results expected → company business seems healthy
+• Dollar earnings strong → TCS makes money in dollars which is good
+• Stock looks cheap → compared to other IT companies, price seems reasonable
+• Bounce pattern → technical charts suggest possible upward move
+
+Important to understand:
+• Markets can move up or down at any time
+• Company results can be different than expected
+• This is only to help beginners understand swing trading concepts
+
+Educational Disclaimer: This content does not constitute investment advice or a recommendation to buy or sell any security. This market observation is shared solely for learning, analysis, and paper trading practice. Users are responsible for their own financial decisions and should consult qualified financial advisors.
+                </pre>
+              </div>
+
+              {/* Sample Idea 4 - QUADFUTURE */}
+              <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-orange-500">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-semibold text-gray-900">FUTURES MARKET STUDY – EDUCATIONAL (Paper Trading Only)</h4>
+                  <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">FUTURES</span>
+                </div>
+                <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
+Instrument: QUADFUTURE
+
+Purpose of this post: This is a simple market study shared only for learning and paper trading. It is not investment advice.
+
+What is happening in simple words:
+The price has stopped falling and is now trying to move up
+The area around 317 is acting like an important level
+Buyers seem to be slowly coming back into the stock
+
+What this means (for learning):
+If the price stays strong above the 317 area and overall market conditions remain supportive, the stock may show gradual upward movement over the next few weeks.
+
+Small upward price movements (for example, 10–40 points from current levels) are being observed only as learning reference, not as guaranteed outcomes.
+
+Why this study is shared:
+• RSI moving up → momentum may be improving
+• Good volume → more market participation is visible
+• Long consolidation → the stock rested for a long time before trying to move
+• Reversal signs → price behavior suggests a possible change in direction
+
+Important to understand:
+• Markets can move up or down at any time
+• This is not a prediction
+• This is only to help beginners understand how traders read charts
+
+Educational Disclaimer: This content does not constitute investment advice or a recommendation to buy or sell any security. This market observation is shared solely for learning, analysis, and paper trading practice. Users are responsible for their own financial decisions and should consult qualified financial advisors.
                 </pre>
               </div>
             </div>
 
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
-                <strong>💡 This is just a preview!</strong> Subscribers get 3-5 fresh ideas like these every day, 
-                plus real-time updates and market analysis.
+                <strong>💡 This is just a preview!</strong> Subscribers get 3-5 fresh educational market studies like these every working day, 
+                plus real-time market analysis and technical observations for paper trading practice and learning.
               </p>
             </div>
           </div>
@@ -418,9 +495,9 @@ Risk: Low | Time: Medium Term (2-3 weeks)
               <div className="mt-6 bg-green-50 rounded-lg p-4">
                 <h4 className="font-semibold text-green-800 mb-2">🌟 What Our Subscribers Say</h4>
                 <div className="space-y-2 text-sm text-green-700">
-                  <p><strong>"Amazing trade ideas!"</strong> - Helped me understand market patterns better</p>
-                  <p><strong>"Worth every rupee"</strong> - Clear entry/exit points make paper trading easy</p>
-                  <p><strong>"Professional analysis"</strong> - Detailed rationale behind each suggestion</p>
+                  <p><strong>"Helped me understand market structure better"</strong> - Enhanced my understanding of market patterns and technical analysis</p>
+                  <p><strong>"Excellent educational content"</strong> - Clear observations make paper trading practice more effective</p>
+                  <p><strong>"Professional market analysis"</strong> - Detailed educational rationale behind each market observation</p>
                 </div>
               </div>
             </div>
@@ -507,7 +584,7 @@ Risk: Low | Time: Medium Term (2-3 weeks)
                   Send your payment screenshot to WhatsApp: <strong>+91 9330255340</strong>
                 </p>
                 <a
-                  href="https://wa.me/919330255340?text=Hi%2C%20I%20have%20made%20payment%20for%20Trade%20Ideas%20subscription.%20Please%20find%20my%20payment%20screenshot."
+                  href="https://wa.me/919330255340?text=Hi%2C%20I%20have%20made%20payment%20for%20Educational%20Market%20Studies%20subscription.%20Please%20find%20my%20payment%20screenshot."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-green-600 hover:text-green-800 text-sm font-medium"
@@ -517,10 +594,25 @@ Risk: Low | Time: Medium Term (2-3 weeks)
                 </a>
               </div>
 
+              {/* Acknowledgment Checkbox */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={acknowledgeTerms}
+                    onChange={(e) => setAcknowledgeTerms(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-blue-800">
+                    <strong>☐ I understand</strong> this platform provides only educational content for paper trading and does not offer investment advice or real-money trading recommendations.
+                  </span>
+                </label>
+              </div>
+
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || !acknowledgeTerms}
                 className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
               >
                 {submitting ? 'Submitting...' : 'Submit Payment Details'}
@@ -529,7 +621,7 @@ Risk: Low | Time: Medium Term (2-3 weeks)
 
             {/* Important Notes */}
             <div className="mt-6 space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              {/* <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 className="font-semibold text-blue-800 mb-2">🚀 Why Subscribe Now?</h4>
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li>• Get 3-5 fresh trade ideas every week</li>
@@ -538,7 +630,7 @@ Risk: Low | Time: Medium Term (2-3 weeks)
                   <li>• Both equity and F&O opportunities covered</li>
                   <li>• Perfect for improving your paper trading skills</li>
                 </ul>
-              </div>
+              </div> */}
 
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <h4 className="font-semibold text-yellow-800 mb-2">⏱️ Quick Approval Process</h4>
@@ -555,7 +647,7 @@ Risk: Low | Time: Medium Term (2-3 weeks)
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <h4 className="font-semibold text-red-800 mb-2">⚠️ Legal Disclaimer</h4>
                 <p className="text-sm text-red-700">
-                  <strong>This platform is not SEBI registered.</strong> All trade ideas are strictly for paper trading and educational purposes only. 
+                  <strong>This platform is not SEBI registered.</strong> All educational market studies are strictly for paper trading and educational purposes only. 
                   No real-money trading or investment advice is provided.
                 </p>
               </div>
