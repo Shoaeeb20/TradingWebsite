@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose'
 export interface IPaymentSubmission extends Document {
   userId: string
   email: string
+  subscriptionType: 'TRADE_IDEAS' | 'ALGO_TRADING' // New field to track which subscription type
   paymentApp: 'GOOGLE_PAY' | 'PHONEPE'
   paymentDate: Date
   userUpiId: string
@@ -17,6 +18,12 @@ const PaymentSubmissionSchema = new Schema<IPaymentSubmission>(
   {
     userId: { type: String, required: true },
     email: { type: String, required: true, lowercase: true },
+    subscriptionType: { 
+      type: String, 
+      required: true, 
+      enum: ['TRADE_IDEAS', 'ALGO_TRADING'],
+      default: 'TRADE_IDEAS' // Backward compatibility
+    },
     paymentApp: { 
       type: String, 
       required: true, 

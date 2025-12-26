@@ -78,8 +78,80 @@ export async function getCachedPrices(symbols: string[]): Promise<Record<string,
   return prices
 }
 
+// Fast refresh for essential stocks only (called by cron job)
+export async function refreshEssentialPrices(): Promise<{ success: number; failed: number }> {
+  const startTime = Date.now()
+  const TIMEOUT_MS = 20000 // 20 seconds timeout
+  
+  await connectDB()
+
+  // Get only the most actively traded stocks to reduce load
+  const essentialSymbols = [
+    'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'HINDUNILVR',
+    'ICICIBANK', 'KOTAKBANK', 'SBIN', 'BHARTIARTL', 'ITC',
+    'ASIANPAINT', 'LT', 'AXISBANK', 'MARUTI', 'SUNPHARMA'
+  ]
+
+  let success = 0
+  let failed = 0
+
+  console.log(`Starting fast refresh for ${essentialSymbols.length} essential stocks`)
+
+  // Skip circuit breaker check for essential refresh - just process quickly
+  for (const symbol of essentialSymbols) {
+    // Check timeout
+    if (Date.now() - startTime > TIMEOUT_MS) {
+      console.log(`⏰ Timeout reached - stopping at ${symbol}`)
+      failed += essentialSymbols.length - essentialSymbols.indexOf(symbol)
+      break
+    }
+
+    try {
+      // Quick fetch with short timeout
+      const quote = await Promise.race([
+        fetchQuote(symbol),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Quick timeout')), 2000)
+        )
+      ]) as any
+
+      if (quote) {
+        await (Price as any).findOneAndUpdate(
+          { symbol },
+          {
+            symbol,
+            price: quote.price,
+            change: quote.change || 0,
+            changePercent: quote.changePercent || 0,
+            updatedAt: new Date(),
+          },
+          { upsert: true, new: true }
+        )
+        success++
+      } else {
+        failed++
+      }
+    } catch (error) {
+      console.error(`Quick refresh failed for ${symbol}:`, error)
+      failed++
+    }
+
+    // Very short delay between requests
+    if (essentialSymbols.indexOf(symbol) < essentialSymbols.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 200))
+    }
+  }
+
+  const duration = (Date.now() - startTime) / 1000
+  console.log(`Fast refresh completed in ${duration}s: ${success} success, ${failed} failed`)
+  return { success, failed }
+}
+
 // Refresh all stock prices (called by cron job)
 export async function refreshAllPrices(): Promise<{ success: number; failed: number }> {
+  const startTime = Date.now()
+  const TIMEOUT_MS = 25000 // 25 seconds timeout to avoid cron job timeouts
+  
   await connectDB()
 
   // Get all active stocks
@@ -89,7 +161,7 @@ export async function refreshAllPrices(): Promise<{ success: number; failed: num
   let success = 0
   let failed = 0
 
-  console.log(`Starting price refresh for ${stocks.length} stocks`)
+  console.log(`Starting price refresh for ${stocks.length} stocks with ${TIMEOUT_MS/1000}s timeout`)
 
   // Check circuit breaker before starting
   const YahooProtection = (await import('./yahooProtection')).default
@@ -101,14 +173,28 @@ export async function refreshAllPrices(): Promise<{ success: number; failed: num
   }
 
   // Process in smaller batches to avoid overwhelming Yahoo API
-  const batchSize = 5 // Reduced from 10
+  const batchSize = 3 // Further reduced for faster processing
   for (let i = 0; i < stocks.length; i += batchSize) {
+    // Check timeout
+    if (Date.now() - startTime > TIMEOUT_MS) {
+      console.log(`⏰ Timeout reached after ${(Date.now() - startTime)/1000}s - stopping refresh`)
+      failed += stocks.length - i
+      break
+    }
+
     const batch = stocks.slice(i, i + batchSize)
 
-    // Process batch sequentially instead of parallel to respect rate limits
+    // Process batch sequentially but with shorter timeout per request
     for (const stock of batch) {
       try {
-        const quote = await fetchQuote(stock.symbol)
+        // Individual request timeout
+        const quote = await Promise.race([
+          fetchQuote(stock.symbol),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Request timeout')), 3000)
+          )
+        ]) as any
+
         if (quote) {
           await (Price as any).findOneAndUpdate(
             { symbol: stock.symbol },
@@ -136,17 +222,25 @@ export async function refreshAllPrices(): Promise<{ success: number; failed: num
         failed += stocks.length - (i + batch.indexOf(stock) + 1)
         break
       }
+
+      // Check timeout again
+      if (Date.now() - startTime > TIMEOUT_MS) {
+        console.log(`⏰ Timeout reached during batch processing`)
+        failed += stocks.length - (i + batch.indexOf(stock) + 1)
+        break
+      }
     }
 
-    // Break outer loop if circuit opened
-    if (protection.isCircuitOpen()) break
+    // Break outer loop if circuit opened or timeout
+    if (protection.isCircuitOpen() || Date.now() - startTime > TIMEOUT_MS) break
 
-    // Longer delay between batches
+    // Shorter delay between batches for faster processing
     if (i + batchSize < stocks.length) {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 500)) // Reduced from 2000ms
     }
   }
 
-  console.log(`Price refresh completed: ${success} success, ${failed} failed`)
+  const duration = (Date.now() - startTime) / 1000
+  console.log(`Price refresh completed in ${duration}s: ${success} success, ${failed} failed`)
   return { success, failed }
 }

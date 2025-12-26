@@ -17,6 +17,7 @@ export interface OrderPayload {
   productType: 'INTRADAY' | 'DELIVERY'
   quantity: number
   price?: number
+  source?: string // Optional source tag for algo trades
 }
 
 export interface OrderResult {
@@ -124,6 +125,7 @@ export async function placeOrder(userId: string, payload: OrderPayload): Promise
           quantity: payload.quantity,
           price: payload.price,
           status: 'PENDING',
+          source: payload.source || 'MANUAL', // Add source tracking
         },
       ],
       { session }
@@ -235,18 +237,27 @@ async function fillMarketOrder(
         await holding.save({ session })
       }
     } else {
-      // New long position
-      await (Holding as any).create(
-        [
-          {
+      // New long position - use findOneAndUpdate with upsert to handle existing records
+      await (Holding as any).findOneAndUpdate(
+        {
+          userId: order.userId,
+          symbol: order.symbol,
+          productType: order.productType,
+        },
+        {
+          $set: {
             userId: order.userId,
             symbol: order.symbol,
             quantity: order.quantity,
             avgPrice: fillPrice,
             productType: order.productType,
-          },
-        ],
-        { session }
+          }
+        },
+        { 
+          upsert: true, 
+          new: true, 
+          session 
+        }
       )
     }
   } else {
@@ -273,17 +284,26 @@ async function fillMarketOrder(
         user.balance += totalCost
         await user.save({ session })
 
-        await (Holding as any).create(
-          [
-            {
+        await (Holding as any).findOneAndUpdate(
+          {
+            userId: order.userId,
+            symbol: order.symbol,
+            productType: order.productType,
+          },
+          {
+            $set: {
               userId: order.userId,
               symbol: order.symbol,
               quantity: -order.quantity,
               avgPrice: fillPrice,
               productType: order.productType,
-            },
-          ],
-          { session }
+            }
+          },
+          { 
+            upsert: true, 
+            new: true, 
+            session 
+          }
         )
       } else {
         return { success: false, message: 'Insufficient delivery holdings' }
@@ -301,6 +321,7 @@ async function fillMarketOrder(
         quantity: order.quantity,
         price: fillPrice,
         total: totalCost,
+        source: order.source || 'MANUAL', // Add source tracking
       },
     ],
     { session }
@@ -448,18 +469,27 @@ async function fillLimitOrder(
         await holding.save({ session })
       }
     } else {
-      // New long position
-      await (Holding as any).create(
-        [
-          {
+      // New long position - use findOneAndUpdate with upsert to handle existing records
+      await (Holding as any).findOneAndUpdate(
+        {
+          userId: order.userId,
+          symbol: order.symbol,
+          productType: order.productType,
+        },
+        {
+          $set: {
             userId: order.userId,
             symbol: order.symbol,
             quantity: order.quantity,
             avgPrice: fillPrice,
             productType: order.productType,
-          },
-        ],
-        { session }
+          }
+        },
+        { 
+          upsert: true, 
+          new: true, 
+          session 
+        }
       )
     }
   } else {
@@ -486,17 +516,26 @@ async function fillLimitOrder(
         user.balance += totalCost
         await user.save({ session })
 
-        await (Holding as any).create(
-          [
-            {
+        await (Holding as any).findOneAndUpdate(
+          {
+            userId: order.userId,
+            symbol: order.symbol,
+            productType: order.productType,
+          },
+          {
+            $set: {
               userId: order.userId,
               symbol: order.symbol,
               quantity: -order.quantity,
               avgPrice: fillPrice,
               productType: order.productType,
-            },
-          ],
-          { session }
+            }
+          },
+          { 
+            upsert: true, 
+            new: true, 
+            session 
+          }
         )
       } else {
         order.status = 'CANCELLED'
@@ -517,6 +556,7 @@ async function fillLimitOrder(
         quantity: order.quantity,
         price: fillPrice,
         total: totalCost,
+        source: order.source || 'MANUAL', // Add source tracking
       },
     ],
     { session }

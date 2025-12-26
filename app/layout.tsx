@@ -81,30 +81,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7953904112923612"
           crossOrigin="anonymous"
         />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function(s){s.dataset.zone='10359925',s.src='https://gizokraijaw.net/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))
-            `,
-          }}
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                      console.log('PropellerAds SW registered successfully:', registration.scope);
-                    })
-                    .catch(function(error) {
-                      console.log('PropellerAds SW registration failed:', error);
-                    });
-                });
-              }
-            `,
-          }}
-        />
+     
+        
       </head>
       <body className={inter.className}>
         <GoogleAnalytics />

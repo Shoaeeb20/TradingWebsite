@@ -8,6 +8,7 @@ export interface ITrade extends Document {
   quantity: number
   price: number
   total: number
+  source?: string // Track trade source (MANUAL, ALGO_MA_CROSSOVER, etc.)
   createdAt: Date
 }
 
@@ -20,6 +21,7 @@ const TradeSchema = new Schema<ITrade>(
     quantity: { type: Number, required: true },
     price: { type: Number, required: true },
     total: { type: Number, required: true },
+    source: { type: String, default: 'MANUAL' }, // Track trade source
   },
   { timestamps: true }
 )

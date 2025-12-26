@@ -13,6 +13,7 @@ export interface IOrder extends Document {
   avgFillPrice?: number
   filledAt?: Date
   cancelledAt?: Date
+  source?: string // Track order source (MANUAL, ALGO_MA_CROSSOVER, etc.)
   createdAt: Date
   updatedAt: Date
 }
@@ -35,6 +36,7 @@ const OrderSchema = new Schema<IOrder>(
     avgFillPrice: { type: Number },
     filledAt: { type: Date },
     cancelledAt: { type: Date },
+    source: { type: String, default: 'MANUAL' }, // Track order source
   },
   { timestamps: true }
 )

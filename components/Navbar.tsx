@@ -24,9 +24,9 @@ export default function Navbar() {
             <Link href="/market-info" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
               Market Info
             </Link>
-            <Link href="/simulator-info" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+            {/* <Link href="/simulator-info" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
               Simulator Info
-            </Link>
+            </Link> */}
             <Link href="/simulator" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
               Simulator
             </Link>
@@ -36,9 +36,9 @@ export default function Navbar() {
             <Link href="/trade-ideas" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
               Trade Ideas
             </Link>
-            <Link href="/leaderboard-info" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+            {/* <Link href="/leaderboard-info" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
               Performance
-            </Link>
+            </Link> */}
             {session && (
               <>
                 <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
@@ -52,6 +52,9 @@ export default function Navbar() {
                 </Link>
                 <Link href="/portfolio" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
                   Portfolio
+                </Link>
+                <Link href="/algo-trading" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                  Algo Trading
                 </Link>
                
               </>
@@ -102,13 +105,13 @@ export default function Navbar() {
               >
                 Market Info
               </Link>
-              <Link 
+              {/* <Link 
                 href="/simulator-info" 
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-2 py-1"
                 onClick={() => setIsOpen(false)}
               >
                 Simulator Info
-              </Link>
+              </Link> */}
               <Link 
                 href="/simulator" 
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-2 py-1"
@@ -130,13 +133,13 @@ export default function Navbar() {
               >
                 Trade Ideas
               </Link>
-              <Link 
+              {/* <Link 
                 href="/leaderboard-info" 
                 className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-2 py-1"
                 onClick={() => setIsOpen(false)}
               >
                 Performance
-              </Link>
+              </Link> */}
               {session && (
                 <>
                   <Link 
@@ -166,6 +169,13 @@ export default function Navbar() {
                     onClick={() => setIsOpen(false)}
                   >
                     Portfolio
+                  </Link>
+                  <Link 
+                    href="/algo-trading" 
+                    className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-2 py-1"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Algo Trading
                   </Link>
                   
                 </>

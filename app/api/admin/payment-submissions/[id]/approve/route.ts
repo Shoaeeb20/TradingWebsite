@@ -64,10 +64,18 @@ export async function POST(
     submission.adminNotes = adminNotes
     await submission.save()
 
-    // Activate subscription
+    // Activate subscription with correct type
+    console.log('Activating subscription:', {
+      userId: submission.userId,
+      submissionId,
+      subscriptionType: submission.subscriptionType,
+      submissionData: submission
+    })
+    
     const activationResult = await activateSubscription(
       submission.userId,
-      submissionId
+      submissionId,
+      submission.subscriptionType || 'TRADE_IDEAS' // Default for backward compatibility
     )
 
     if (!activationResult.success) {
