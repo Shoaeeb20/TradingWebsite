@@ -3,6 +3,7 @@ import Stock from '@/models/Stock'
 import StockCard from '@/components/StockCard'
 import Link from 'next/link'
 import SearchBox from '@/components/SearchBox'
+import FreeTierBanner from '@/components/FreeTierBanner'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +35,10 @@ export default async function Market({ searchParams }: { searchParams: { q?: str
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-    
+      {/* Free Tier Usage Notice */}
+      <FreeTierBanner />
+
+     
 
       {/* Educational Market Studies Banner */}
       <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">

@@ -10,6 +10,7 @@ import PortfolioSummary from '@/components/PortfolioSummary'
 import RecentTrades from '@/components/RecentTrades'
 import ActiveOrders from '@/components/ActiveOrders'
 import GrowwReferral from '@/components/GrowwReferral'
+import FreeTierBanner from '@/components/FreeTierBanner'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -35,6 +36,9 @@ export default async function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Free Tier Usage Notice */}
+      <FreeTierBanner />
+      
       {/* Educational Market Studies Banner */}
       <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-center justify-between">

@@ -7,8 +7,23 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const secret = searchParams.get('secret')
     
+    console.log('Algo Execute Auth Debug:', {
+      receivedSecret: secret,
+      expectedSecret: process.env.CRON_SECRET,
+      secretsMatch: secret === process.env.CRON_SECRET,
+      receivedSecretLength: secret?.length,
+      expectedSecretLength: process.env.CRON_SECRET?.length,
+      url: req.url
+    })
+    
     if (secret !== process.env.CRON_SECRET) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ 
+        error: 'Unauthorized',
+        debug: {
+          receivedSecret: secret ? `${secret.substring(0, 5)}...` : 'null',
+          expectedLength: process.env.CRON_SECRET?.length || 0
+        }
+      }, { status: 401 })
     }
 
     console.log('Starting automated algo trading execution...')
