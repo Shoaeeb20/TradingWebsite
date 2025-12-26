@@ -14,7 +14,8 @@
     "migrate-capital": "tsx scripts/migrateUserCapital.ts",
     "test-cache": "tsx scripts/testCache.ts",
     "migrate-fno": "node scripts/migrate-fno-balance.js",
-    "migrate-shorts": "node scripts/migrate-short-positions.js"
+    "migrate-shorts": "node scripts/migrate-short-positions.js",
+    "test-redirects": "node scripts/test-redirects.js"
   },
   "dependencies": {
     "axios": "^1.6.5",
