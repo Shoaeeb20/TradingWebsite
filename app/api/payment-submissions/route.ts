@@ -134,13 +134,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `${subscriptionType} payment submission received. Please send screenshot to WhatsApp +91 9330255340. Approval takes 24-48 hours.`,
+      message: `${subscriptionType} payment submission received. Please send screenshot via WhatsApp for verification. Approval takes 24-48 hours.`,
       data: {
         submissionId: submission._id.toString(),
         subscriptionType,
         amount: expectedAmount,
         status: 'PENDING',
-        whatsappNumber: '+91 9330255340'
+        whatsappNumber: 'Contact via WhatsApp'
       }
     })
   } catch (error) {

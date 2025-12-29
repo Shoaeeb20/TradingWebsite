@@ -227,7 +227,7 @@ export default function AlgoTradingSubscribePage() {
                     <li><strong>1.</strong> Scan QR code or use UPI ID: {upiId}</li>
                     <li><strong>2.</strong> Pay exactly ₹{amount}</li>
                     <li><strong>3.</strong> Take screenshot of payment</li>
-                    <li><strong>4.</strong> Send to WhatsApp: 9330255340</li>
+                    <li><strong>4.</strong> Send to WhatsApp for verification</li>
                     <li><strong>5.</strong> Submit your UPI ID below</li>
                   </ol>
                 </div>

@@ -161,18 +161,17 @@ export default function SubscribePage() {
             <h3 className="font-bold text-green-800 mb-3">Next Step: Send Screenshot</h3>
             <div className="space-y-3">
               <a
-                href="https://wa.me/919330255340?text=Hi%2C%20I%20have%20made%20payment%20for%20Educational%20Market%20Studies%20subscription.%20Please%20find%20my%20payment%20screenshot."
-                target="_blank"
-                rel="noopener noreferrer"
+                href="#"
+                onClick={(e) => e.preventDefault()}
                 className="block w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium"
               >
                 📱 Send Screenshot on WhatsApp
               </a>
               <p className="text-sm text-green-700">
-                <strong>WhatsApp:</strong> +91 9330255340
+                <strong>Contact:</strong> Send via WhatsApp after payment
               </p>
               <p className="text-xs text-green-600">
-                Click the button above to open WhatsApp with a pre-filled message
+                Send your payment screenshot via WhatsApp for verification
               </p>
             </div>
           </div>
@@ -487,7 +486,7 @@ Educational Disclaimer: This content does not constitute investment advice or a 
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">4</div>
-                  <p className="text-sm text-gray-700">Send payment screenshot to WhatsApp +91 9330255340</p>
+                  <p className="text-sm text-gray-700">Send payment screenshot via WhatsApp</p>
                 </div>
               </div>
 
@@ -581,16 +580,15 @@ Educational Disclaimer: This content does not constitute investment advice or a 
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <h4 className="font-semibold text-green-800 mb-2">📱 After Submitting</h4>
                 <p className="text-sm text-green-700 mb-3">
-                  Send your payment screenshot to WhatsApp: <strong>+91 9330255340</strong>
+                  Send your payment screenshot via WhatsApp for verification
                 </p>
                 <a
-                  href="https://wa.me/919330255340?text=Hi%2C%20I%20have%20made%20payment%20for%20Educational%20Market%20Studies%20subscription.%20Please%20find%20my%20payment%20screenshot."
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="#"
+                  onClick={(e) => e.preventDefault()}
                   className="inline-flex items-center gap-2 text-green-600 hover:text-green-800 text-sm font-medium"
                 >
                   <span>📱</span>
-                  Open WhatsApp Chat
+                  Send via WhatsApp
                 </a>
               </div>
 
@@ -637,7 +635,7 @@ Educational Disclaimer: This content does not constitute investment advice or a 
                 <ul className="text-sm text-yellow-700 space-y-1">
                   <li>• Submit form first, then send screenshot to WhatsApp</li>
                   <li>• Approval takes 24-48 hours after screenshot verification</li>
-                  <li>• WhatsApp: +91 9330255340</li>
+                  <li>• WhatsApp verification required</li>
                   <li>• Access valid for 30 days after approval</li>
                   <li>• Only Google Pay and PhonePe payments accepted</li>
                 </ul>

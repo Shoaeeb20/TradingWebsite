@@ -302,7 +302,7 @@ export default function AdminTradeIdeasPage() {
                             </div>
                             <div className="mb-2">
                               <p className="text-sm text-gray-600">
-                                <strong>WhatsApp:</strong> +91 9330255340<br />
+                                <strong>Contact:</strong> WhatsApp verification required<br />
                                 <span className="text-xs text-gray-500">
                                   (User should send screenshot here)
                                 </span>
