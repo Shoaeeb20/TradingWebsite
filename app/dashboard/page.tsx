@@ -6,12 +6,7 @@ import User from '@/models/User'
 import Holding from '@/models/Holding'
 import Trade from '@/models/Trade'
 import Order from '@/models/Order'
-import PortfolioSummary from '@/components/PortfolioSummary'
-import RecentTrades from '@/components/RecentTrades'
-import ActiveOrders from '@/components/ActiveOrders'
-import GrowwReferral from '@/components/GrowwReferral'
-import FreeTierBanner from '@/components/FreeTierBanner'
-import Link from 'next/link'
+import DashboardClient from '@/components/DashboardClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,72 +29,14 @@ export default async function Dashboard() {
     .sort({ createdAt: -1 })
     .lean()
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Free Tier Usage Notice */}
-      <FreeTierBanner />
-      
-      {/* Educational Market Studies Banner */}
-      <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">📚</div>
-            <div>
-              <h3 className="font-semibold text-blue-900">Enhance Your Trading Knowledge</h3>
-              <p className="text-sm text-blue-700">Access educational market studies and analysis for just ₹39/month</p>
-            </div>
-          </div>
-          <Link 
-            href="/trade-ideas/subscribe" 
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-          >
-            Learn More →
-          </Link>
-        </div>
-      </div>
+  // Serialize data for client component
+  const dashboardData = {
+    user: JSON.parse(JSON.stringify(user)),
+    holdings: JSON.parse(JSON.stringify(holdings)),
+    recentTrades: JSON.parse(JSON.stringify(recentTrades)),
+    totalTrades,
+    activeOrders: JSON.parse(JSON.stringify(activeOrders))
+  }
 
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
-
-      <PortfolioSummary
-        balance={user.balance || 0}
-        fnoBalance={user.fnoBalance || 0}
-        holdings={holdings.map((h) => ({
-          symbol: h.symbol,
-          quantity: h.quantity,
-          avgPrice: h.avgPrice,
-        }))}
-      />
-
-      {/* Groww Referral */}
-      <div className="mt-8">
-        <GrowwReferral />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-        <ActiveOrders
-          orders={activeOrders.map((o: any) => ({
-            id: o._id.toString(),
-            symbol: o.symbol,
-            type: o.type,
-            orderType: o.orderType,
-            quantity: o.quantity,
-            price: o.price,
-            createdAt: o.createdAt.toISOString(),
-          }))}
-        />
-
-        <RecentTrades
-          trades={recentTrades.map((t) => ({
-            symbol: t.symbol,
-            type: t.type,
-            quantity: t.quantity,
-            price: t.price,
-            total: t.total,
-            createdAt: t.createdAt.toISOString(),
-          }))}
-          totalTrades={totalTrades}
-        />
-      </div>
-    </div>
-  )
+  return <DashboardClient initialData={dashboardData} />
 }

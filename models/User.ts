@@ -9,6 +9,7 @@ export interface IUser extends Document {
   initialCapital: number // Starting capital for ROI calculation
   totalTopUps: number // Sum of all money added
   totalWithdrawals: number // Sum of all money withdrawn
+  firstTradeBonus?: boolean // Track if first trade bonus was awarded
   provider?: string
   createdAt: Date
   updatedAt: Date
@@ -24,6 +25,7 @@ const UserSchema = new Schema<IUser>(
     initialCapital: { type: Number, default: 200000 }, // Starting capital (balance + fnoBalance)
     totalTopUps: { type: Number, default: 0 }, // Sum of all money added
     totalWithdrawals: { type: Number, default: 0 }, // Sum of all money withdrawn
+    firstTradeBonus: { type: Boolean, default: false }, // Track if first trade bonus was awarded
     provider: { type: String, default: 'credentials' },
   },
   { timestamps: true }
