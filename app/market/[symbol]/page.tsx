@@ -3,6 +3,7 @@ import Stock from '@/models/Stock'
 import { notFound } from 'next/navigation'
 import TradeForm from '@/components/TradeForm'
 import StockChart from '@/components/StockChart'
+import QuickTradeButton from '@/components/QuickTradeButton'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import User from '@/models/User'
@@ -54,17 +55,49 @@ export default async function StockPage({ params }: { params: { symbol: string }
           <StockChart symbol={stock.symbol} />
         </div>
 
-        <div>
-          {session ? (
-            <TradeForm symbol={stock.symbol} />
-          ) : (
-            <div className="card text-center">
-              <p className="mb-4">Sign in to trade</p>
-              <a href="/auth/signin" className="btn btn-primary">
-                Sign In
-              </a>
+        <div className="space-y-6">
+          {/* Quick Trade Section */}
+          {session && (
+            <div className="card">
+              <h3 className="text-lg font-semibold mb-4">⚡ Quick Trade</h3>
+              <div className="space-y-3">
+                <QuickTradeButton
+                  symbol={stock.symbol}
+                  name={stock.name}
+                  amount={5000}
+                  type="BUY"
+                  variant="success"
+                  size="lg"
+                />
+                <QuickTradeButton
+                  symbol={stock.symbol}
+                  name={stock.name}
+                  amount={3000}
+                  type="SELL"
+                  variant="danger"
+                  size="lg"
+                />
+              </div>
+              <p className="text-xs text-gray-500 text-center mt-3">
+                💡 One-click trading with virtual money
+              </p>
             </div>
           )}
+
+          {/* Advanced Trading Form */}
+          <div className="card">
+            <h3 className="text-lg font-semibold mb-4">📊 Advanced Trading</h3>
+            {session ? (
+              <TradeForm symbol={stock.symbol} />
+            ) : (
+              <div className="text-center">
+                <p className="mb-4">Sign in to trade</p>
+                <a href="/auth/signin" className="btn btn-primary">
+                  Sign In
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

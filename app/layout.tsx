@@ -5,6 +5,8 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Providers from '@/components/Providers'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import QuickTradeFloatingButton from '@/components/QuickTradeFloatingButton'
+import DailyChallengeNotification from '@/components/DailyChallengeNotification'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -90,6 +92,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Navbar />
           <main className="min-h-screen bg-gray-50">{children}</main>
           <Footer />
+          <QuickTradeFloatingButton />
+          <DailyChallengeNotification />
         </Providers>
       </body>
     </html>

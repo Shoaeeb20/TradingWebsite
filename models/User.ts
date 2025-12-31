@@ -10,6 +10,18 @@ export interface IUser extends Document {
   totalTopUps: number // Sum of all money added
   totalWithdrawals: number // Sum of all money withdrawn
   firstTradeBonus?: boolean // Track if first trade bonus was awarded
+  lastAchievementCheck?: {
+    totalTrades: number
+    totalProfit: number
+    daysSinceJoined: number
+    hasFirstTrade: boolean
+  } // Track last achievement check state
+  lastAchievementCheckDate?: Date // When achievements were last checked
+  activeChallenges?: {
+    challengeId: string
+    joinedAt: Date
+    progress: number
+  }[] // Track active social challenges
   provider?: string
   createdAt: Date
   updatedAt: Date
@@ -26,6 +38,18 @@ const UserSchema = new Schema<IUser>(
     totalTopUps: { type: Number, default: 0 }, // Sum of all money added
     totalWithdrawals: { type: Number, default: 0 }, // Sum of all money withdrawn
     firstTradeBonus: { type: Boolean, default: false }, // Track if first trade bonus was awarded
+    lastAchievementCheck: {
+      totalTrades: { type: Number, default: 0 },
+      totalProfit: { type: Number, default: 0 },
+      daysSinceJoined: { type: Number, default: 0 },
+      hasFirstTrade: { type: Boolean, default: false }
+    }, // Track last achievement check state
+    lastAchievementCheckDate: { type: Date }, // When achievements were last checked
+    activeChallenges: [{
+      challengeId: { type: String, required: true },
+      joinedAt: { type: Date, default: Date.now },
+      progress: { type: Number, default: 0 }
+    }], // Track active social challenges
     provider: { type: String, default: 'credentials' },
   },
   { timestamps: true }

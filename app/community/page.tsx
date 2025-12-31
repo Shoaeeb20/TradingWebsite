@@ -1,5 +1,8 @@
 import type { Metadata } from 'next'
 import CommunityStats from '@/components/CommunityStats'
+import SocialTradingFeed from '@/components/SocialTradingFeed'
+import PeerComparison from '@/components/PeerComparison'
+import SocialChallenges from '@/components/SocialChallenges'
 
 export const metadata: Metadata = {
   title: 'Trading Community - PaperTrade India',
@@ -23,6 +26,20 @@ export default function CommunityPage() {
 
         {/* Community Stats Component */}
         <CommunityStats />
+
+        {/* Social Features Grid */}
+        <div className="mt-12 grid lg:grid-cols-3 gap-8">
+          {/* Left Column - Feed and Challenges */}
+          <div className="lg:col-span-2 space-y-8">
+            <SocialTradingFeed />
+            <SocialChallenges />
+          </div>
+          
+          {/* Right Column - Peer Comparison */}
+          <div>
+            <PeerComparison />
+          </div>
+        </div>
 
         {/* Community Features */}
         <div className="mt-16 grid md:grid-cols-3 gap-8">

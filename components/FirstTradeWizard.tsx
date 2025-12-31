@@ -47,7 +47,7 @@ export default function FirstTradeWizard({ onTradeComplete }: FirstTradeWizardPr
     setError(null)
 
     try {
-      const response = await fetch('/api/orders', {
+      const response = await fetch('/api/order/place', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -63,7 +63,7 @@ export default function FirstTradeWizard({ onTradeComplete }: FirstTradeWizardPr
 
       const data = await response.json()
 
-      if (data.success) {
+      if (response.ok && data.success) {
         setSuccess(stock.symbol)
         setLoading(null)
         
@@ -72,7 +72,7 @@ export default function FirstTradeWizard({ onTradeComplete }: FirstTradeWizardPr
           onTradeComplete()
         }, 2000)
       } else {
-        setError(data.message || 'Trade failed')
+        setError(data.error || data.message || 'Trade failed')
         setLoading(null)
       }
     } catch (err) {

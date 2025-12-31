@@ -3,6 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import FirstTradeWizard from './FirstTradeWizard'
+import SmartTradingSuggestions from './SmartTradingSuggestions'
+import TradingProgress from './TradingProgress'
+import SocialTradingFeed from './SocialTradingFeed'
+import PeerComparison from './PeerComparison'
+import SocialChallenges from './SocialChallenges'
 import PortfolioSummary from './PortfolioSummary'
 import RecentTrades from './RecentTrades'
 import ActiveOrders from './ActiveOrders'
@@ -89,6 +94,16 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
       {showWizard && (
         <FirstTradeWizard onTradeComplete={handleTradeComplete} />
       )}
+
+      {/* Smart Trading Suggestions - Show for users who completed first trade but aren't very active */}
+      {!showWizard && userProgress && (
+        <SmartTradingSuggestions userProgress={userProgress} />
+      )}
+
+      {/* Trading Progress - Show for users who have made at least one trade */}
+      {userProgress && userProgress.hasFirstTrade && (
+        <TradingProgress userProgress={userProgress} />
+      )}
       
       {/* Educational Market Studies Banner */}
       <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
@@ -153,6 +168,13 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
           }))}
           totalTrades={initialData.totalTrades}
         />
+      </div>
+
+      {/* Social Features Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+        <SocialTradingFeed />
+        <PeerComparison />
+        <SocialChallenges />
       </div>
 
       {/* User Progress Stats (if they've made trades) */}

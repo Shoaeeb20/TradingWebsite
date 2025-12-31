@@ -72,7 +72,11 @@ export default async function Market({ searchParams }: { searchParams: { q?: str
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {stocks.map((stock) => (
           <Link key={stock.symbol} href={`/market/${stock.symbol}`}>
-            <StockCard symbol={stock.symbol} name={stock.name} />
+            <StockCard 
+              symbol={stock.symbol} 
+              name={stock.name} 
+              showQuickTrade={true}
+            />
           </Link>
         ))}
       </div>

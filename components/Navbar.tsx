@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { useState } from 'react'
+import SocialLeaderboardWidget from './SocialLeaderboardWidget'
 
 export default function Navbar() {
   const { data: session } = useSession()
@@ -63,6 +64,7 @@ export default function Navbar() {
 
           {/* Desktop Auth */}
           <div className="hidden md:flex items-center space-x-4">
+            <SocialLeaderboardWidget />
             {session ? (
               <>
                 <span className="text-sm font-medium text-gray-700 px-3 py-1 bg-gray-100 rounded-full">

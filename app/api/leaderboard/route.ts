@@ -32,15 +32,29 @@ export async function GET(request: NextRequest) {
       .select('name email balance fnoBalance initialCapital totalTopUps totalWithdrawals')
       .lean()
 
+    if (!allUsers || allUsers.length === 0) {
+      return NextResponse.json({
+        users: [],
+        pagination: {
+          page: 1,
+          limit,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false
+        }
+      })
+    }
+
     // Get ALL holdings and F&O positions for all users
-    const userIds = allUsers.map((u: any) => u._id)
+    const userIds = allUsers.map((u: any) => u._id.toString()) // Convert to string
     const holdings = await (Holding as any)
-      .find({ userId: { $in: userIds } })
+      .find({ userId: { $in: allUsers.map((u: any) => u._id) } })
       .lean()
     
     const fnoPositions = await (FnoPosition as any)
       .find({ 
-        userId: { $in: userIds },
+        userId: { $in: allUsers.map((u: any) => u._id) },
         isExpired: false,
         isSettled: false
       })
@@ -48,15 +62,29 @@ export async function GET(request: NextRequest) {
 
     // Get unique symbols for price fetching
     const symbols = [...new Set(holdings.map((h: any) => h.symbol))] as string[]
-    const prices = await getCachedPrices(symbols)
+    let prices: Record<string, number> = {}
+    let spotPrices: Record<string, number> = {}
+    
+    try {
+      prices = await getCachedPrices(symbols)
+    } catch (error) {
+      console.warn('Failed to fetch cached prices:', error)
+      prices = {}
+    }
     
     // Get F&O spot prices
-    const spotPrices = await getSpotPrices()
+    try {
+      spotPrices = await getSpotPrices()
+    } catch (error) {
+      console.warn('Failed to fetch spot prices:', error)
+      spotPrices = {}
+    }
 
     // Calculate ROI for ALL users
     const usersWithReturns = allUsers.map((user: any) => {
-      const userHoldings = holdings.filter((h: any) => h.userId.toString() === user._id.toString())
-      const userFnoPositions = fnoPositions.filter((p: any) => p.userId.toString() === user._id.toString())
+      const userId = user._id.toString() // Convert ObjectId to string
+      const userHoldings = holdings.filter((h: any) => h.userId.toString() === userId)
+      const userFnoPositions = fnoPositions.filter((p: any) => p.userId.toString() === userId)
       
       // Calculate stock holdings value
       let holdingsValue = 0
@@ -71,25 +99,34 @@ export async function GET(request: NextRequest) {
 
       // Calculate F&O positions value (unrealized P&L)
       let fnoUnrealizedPnL = 0
-      userFnoPositions.forEach((position: any) => {
-        const contract = position.contract
-        const spotPrice = spotPrices[contract.index]
-        
-        if (!spotPrice || isExpired(contract.expiry)) {
-          return // Skip if no price or expired
-        }
-        
-        const currentPrice = calculateOptionPrice(contract, spotPrice)
-        const isShort = position.quantity < 0
-        
-        if (isShort) {
-          // Short position P&L: profit when price falls
-          fnoUnrealizedPnL += (position.avgPrice - currentPrice) * Math.abs(position.quantity)
-        } else {
-          // Long position P&L: profit when price rises  
-          fnoUnrealizedPnL += (currentPrice - position.avgPrice) * Math.abs(position.quantity)
-        }
-      })
+      try {
+        userFnoPositions.forEach((position: any) => {
+          const contract = position.contract
+          if (!contract || !contract.index) return
+          
+          const spotPrice = spotPrices[contract.index]
+          
+          if (!spotPrice || isExpired(contract.expiry)) {
+            return // Skip if no price or expired
+          }
+          
+          const currentPrice = calculateOptionPrice(contract, spotPrice)
+          if (!currentPrice || isNaN(currentPrice)) return
+          
+          const isShort = position.quantity < 0
+          
+          if (isShort) {
+            // Short position P&L: profit when price falls
+            fnoUnrealizedPnL += (position.avgPrice - currentPrice) * Math.abs(position.quantity)
+          } else {
+            // Long position P&L: profit when price rises  
+            fnoUnrealizedPnL += (currentPrice - position.avgPrice) * Math.abs(position.quantity)
+          }
+        })
+      } catch (error) {
+        console.warn('Error calculating F&O P&L for user:', userId, error)
+        fnoUnrealizedPnL = 0
+      }
 
       const equityBalance = user.balance || 0
       const fnoBalance = user.fnoBalance || 0
@@ -105,17 +142,17 @@ export async function GET(request: NextRequest) {
       const returnPercent = totalInvested > 0 ? (netPnL / totalInvested) * 100 : 0
       
       return {
-        userId: user._id,
-        name: user.name,
-        email: user.email,
-        balance: equityBalance,
-        fnoBalance,
-        holdingsValue,
-        fnoUnrealizedPnL,
-        currentValue,
-        totalInvested,
-        netPnL,
-        returnPercent
+        userId: userId, // Already converted to string
+        name: user.name || 'Anonymous',
+        email: user.email || '',
+        balance: Number(equityBalance) || 0,
+        fnoBalance: Number(fnoBalance) || 0,
+        holdingsValue: Number(holdingsValue) || 0,
+        fnoUnrealizedPnL: Number(fnoUnrealizedPnL) || 0,
+        currentValue: Number(currentValue) || 0,
+        totalInvested: Number(totalInvested) || 0,
+        netPnL: Number(netPnL) || 0,
+        returnPercent: Number(returnPercent) || 0
       }
     })
 
@@ -134,18 +171,31 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
     const paginatedUsers = rankedUsers.slice(skip, skip + limit)
 
-    // Remove userId from response
-    const responseUsers = paginatedUsers.map(({ userId, ...user }: any) => user)
+    // Remove userId from response and ensure all values are serializable
+    const responseUsers = paginatedUsers.map(({ userId, ...user }: any) => ({
+      ...user,
+      rank: Number(user.rank),
+      name: String(user.name || 'Anonymous'),
+      email: String(user.email || ''),
+      balance: Number(user.balance || 0),
+      fnoBalance: Number(user.fnoBalance || 0),
+      holdingsValue: Number(user.holdingsValue || 0),
+      fnoUnrealizedPnL: Number(user.fnoUnrealizedPnL || 0),
+      currentValue: Number(user.currentValue || 0),
+      totalInvested: Number(user.totalInvested || 0),
+      netPnL: Number(user.netPnL || 0),
+      returnPercent: Number(user.returnPercent || 0)
+    }))
 
     return NextResponse.json({
       users: responseUsers,
       pagination: {
-        page,
-        limit,
-        total: totalUsers,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1
+        page: Number(page),
+        limit: Number(limit),
+        total: Number(totalUsers),
+        totalPages: Number(totalPages),
+        hasNext: Boolean(page < totalPages),
+        hasPrev: Boolean(page > 1)
       }
     })
   } catch (error) {
